@@ -46,7 +46,7 @@ $(IMAGE): $(TARGET)
 # Emulate
 .PHONY: run
 run: $(IMAGE)
-	@qemu-system-x86_64 							\
+	@$(QEMU) 										\
 		-cdrom $(IMAGE) 							\
 		-m 256M 									\
 		-serial stdio 								\
@@ -55,7 +55,7 @@ run: $(IMAGE)
 # Debug
 .PHONY: debug
 debug: $(IMAGE)
-	@qemu-system-x86_64 							\
+	@$(QEMU) 										\
 		-cdrom $(IMAGE) 							\
 		-m 256M 									\
 		-serial stdio 								\

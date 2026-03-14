@@ -6,6 +6,12 @@ BUILD					?= ./build
 TARGET					?= $(BUILD)/kernel.elf
 IMAGE					?= kernel.iso
 
+# Check required tools.
+REQUIRED_TOOLS = $(CC) $(AS) $(LD) xorriso $(QEMU)
+$(foreach tool,$(REQUIRED_TOOLS),\
+    $(if $(shell command -v $(tool) 2>/dev/null),,\
+        $(error Required tool '$(tool)' not found in PATH)))
+
 all: $(IMAGE)
 
 # Architecture and platform specific macros.
@@ -73,6 +79,7 @@ external/limine/limine:
 		--branch=v10.x-binary --depth=1
 	@$(MAKE) -C external/limine
 
+# Cleaning rules
 .PHONY: clean
 clean:
 	@echo "Cleaning build directory..."
@@ -82,3 +89,11 @@ clean:
 clean-all: clean
 	@echo "Cleaning external tools..."
 	@rm -rf external
+
+# Help
+.PHONY: help
+help:
+	@echo "Available architectures:"
+	@echo "    - x86_64"
+	@echo "Type \`make help-<arch>\` for listing available platforms."
+	@echo

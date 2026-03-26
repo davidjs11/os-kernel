@@ -18,6 +18,9 @@ all: $(IMAGE)
 include arch/$(ARCH)/arch.mk
 include arch/$(ARCH)/platform/$(PLATFORM)/platform.mk
 
+# Build-system configuration file
+include config.mk
+
 # Input source files and output object files.
 SUBDIRS					= arch/$(ARCH) arch/$(ARCH)/platform/$(PLATFORM) kernel
 SOURCES_C				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
@@ -31,16 +34,16 @@ DEPENDENCIES			= $(OBJECTS:.o=.d)
 -include $(DEPENDENCIES)
 
 # Target-independent flags.
-CFLAGS 					+= 	\
-    -ffreestanding 			\
-    -fno-stack-protector 	\
-    -fno-pic 				\
-    -fno-pie 				\
-    -nostdlib 				\
-    -std=c99 				\
+CFLAGS					+=	\
+	-ffreestanding			\
+	-fno-stack-protector	\
+	-fno-pic				\
+	-fno-pie				\
+	-nostdlib				\
+	-std=c99				\
 	-MMD					\
-	-MP 					\
-    -I$(INCLUDE)
+	-MP						\
+	-I$(INCLUDE)
 
 # Debug-only flags.
 ifdef DEBUG

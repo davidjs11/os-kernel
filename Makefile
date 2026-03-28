@@ -47,7 +47,7 @@ CFLAGS					+=	\
 
 # Debug-only flags.
 ifdef DEBUG
-	CFLAGS += -g -Og -DDEBUG
+	CFLAGS += -g -Og -DDEBUG -O0
 else
 	CFLAGS += -O2
 endif

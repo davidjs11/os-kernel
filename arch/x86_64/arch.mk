@@ -8,9 +8,13 @@ LD						= x86_64-elf-ld
 GDB						= x86_64-elf-gdb
 QEMU					= qemu-system-x86_64
 
-CFLAGS					:=	\
-    -mno-red-zone			\
-    -m64
+CFLAGS					+=	\
+    -m64                    \
+    -mcmodel=kernel         \
+    -mno-red-zone           \
+    -mno-mmx                \
+    -mno-sse                \
+    -mno-sse2
 
 .PHONY: help
 help-x86_64:

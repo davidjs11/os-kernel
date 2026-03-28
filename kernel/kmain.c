@@ -2,6 +2,7 @@
 
 /* Kernel main entry point. */
 
+#include <arch_init.h>
 #include <limine_requests.h>
 
 /*
@@ -25,6 +26,8 @@ void print_color(struct limine_framebuffer *framebuffer, uint32_t color) {
  * @brief Kernel entry point.
  */
 void kmain(void) {
+    arch_init();
+
     while (1) {
         for (uint8_t x = 0; x < 0xff; x++) {
             print_color(

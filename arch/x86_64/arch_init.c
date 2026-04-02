@@ -3,12 +3,17 @@
 /* Architecture-specific initialization code implementation for x86_64. */
 
 #include <arch_init.h>
-#include "segments.h"
+#include <stddef.h>
+#include "segment.h"
+#include "interrupt.h"
 
-gdt_t gdt;
-tss64_t tss;
+void arch_init(void)
+{
+    segment_init();
+    interrupt_init();
+    interrupt_enable();
 
-void arch_init(void) {
-    /* Initialize segments. */
-    segments_init(&gdt, &tss);
+    /* Trigger #PF exception */
+    volatile uint64_t *p = (uint64_t *)0xdeadbeef;
+    *p;
 }

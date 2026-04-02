@@ -61,4 +61,5 @@ debug: $(IMAGE)
 		-serial stdio								\
 		-s -S &
 	@$(GDB) $(TARGET)								\
-		-ex "target remote localhost:1234"
+		-ex "target remote localhost:1234"			\
+		-ex "layout src"

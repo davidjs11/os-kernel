@@ -7,8 +7,8 @@
  *   Intel SDM Vol. 3A, Chapter 7 - Interrupt and Exception Handling
  */
 
-#ifndef ARCH_X86_64_INTERRUPT
-#define ARCH_X86_64_INTERRUPT
+#ifndef ARCH_X86_64_INTERRUPT_H
+#define ARCH_X86_64_INTERRUPT_H
 
 #include <stdint.h>
 
@@ -109,4 +109,4 @@ static inline void interrupt_disable()
     __asm__ volatile ("cli" ::: "memory");
 }
 
-#endif /* ARCH_X86_64_INTERRUPT */
+#endif /* ARCH_X86_64_INTERRUPT_H */

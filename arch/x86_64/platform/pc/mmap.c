@@ -1,0 +1,61 @@
+/*   arch/x86_64/platform/pc/mmap.c   */
+
+/* Implementation of PC platform-specific memory map functionality. */
+
+#include <platform/mmap.h>
+#include "limine.h"
+
+/* Limine memory map request. */
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_memmap_request limine_memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST_ID,
+    .revision = 0,
+};
+
+/* Kernel's own copy of the memory map. */
+#define MMAP_ENTRIES_MAX 64
+static mmap_entry_t mmap_entry[MMAP_ENTRIES_MAX];
+
+static inline mmap_type_t limine_to_kernel_type(uint64_t type) {
+    switch (type) {
+        case LIMINE_MEMMAP_USABLE:                 return MMAP_USABLE;
+        case LIMINE_MEMMAP_RESERVED:               return MMAP_RESERVED;
+        case LIMINE_MEMMAP_ACPI_RECLAIMABLE:       return MMAP_ACPI_RECLAIMABLE;
+        case LIMINE_MEMMAP_ACPI_NVS:               return MMAP_ACPI_NVS;
+        case LIMINE_MEMMAP_BAD_MEMORY:             return MMAP_BAD_MEMORY;
+        case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE: return MMAP_BOOTLOADER_RECLAIMABLE;
+        case LIMINE_MEMMAP_EXECUTABLE_AND_MODULES: return MMAP_KERNEL_AND_MODULES;
+        case LIMINE_MEMMAP_FRAMEBUFFER:            return MMAP_FRAMEBUFFER;
+        default:                                   return MMAP_RESERVED;
+    }
+}
+
+mmap_entry_t *platform_mmap_get()
+{
+    struct limine_memmap_response *limine_mmap =
+        limine_memmap_request.response;
+    size_t i = 0;
+
+    if (!limine_mmap) {
+        __asm__ volatile ("cli; hlt");
+    }
+
+    /* Copy entries from Limine memory to kernel memory. */
+    for (i = 0; i < limine_mmap->entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
+        mmap_entry[i] = (mmap_entry_t) {
+            .base  = limine_mmap->entries[i]->base,
+            .size = limine_mmap->entries[i]->length,
+            .type  = limine_to_kernel_type(limine_mmap->entries[i]->type),
+        };
+    }
+
+    /* TODO: use memset when available. */
+    /* Null sentinel entry that marks end of the map. */
+    mmap_entry[i] = (mmap_entry_t) {
+        .base = 0,
+        .size = 0,
+        .type = 0,
+    };
+
+    return &mmap_entry[0];
+}

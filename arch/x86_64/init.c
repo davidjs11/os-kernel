@@ -1,8 +1,8 @@
-/*   arch/x86_64/arch_init.c   */
+/*   arch/x86_64/init.c   */
 
 /* Architecture-specific initialization code implementation for x86_64. */
 
-#include <arch_init.h>
+#include <arch.h>
 #include <stddef.h>
 #include "segment.h"
 #include "interrupt.h"
@@ -14,6 +14,6 @@ void arch_init(void)
     interrupt_enable();
 
     /* Trigger #PF exception */
-    volatile uint64_t *p = (uint64_t *)0xdeadbeef;
-    *p;
+    // volatile uint64_t *p = (uint64_t *)0xdeadbeef;
+    // *p;
 }

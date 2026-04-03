@@ -8,8 +8,8 @@
  *   Intel SDM Vol. 3A, Chapter 10 - Task Management
  */
 
-#ifndef ARCH_X86_64_SEGMENT
-#define ARCH_X86_64_SEGMENT
+#ifndef ARCH_X86_64_SEGMENT_H
+#define ARCH_X86_64_SEGMENT_H
 
 #include <stdint.h>
 
@@ -196,4 +196,4 @@ typedef struct __attribute__((packed)) gdt {
  */
 void segment_init(void);
 
-#endif /* ARCH_X86_64_SEGMENT */
+#endif /* ARCH_X86_64_SEGMENT_H */

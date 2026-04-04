@@ -145,7 +145,7 @@ typedef struct __attribute__((packed)) tss_desc {
 /*
  * @brief Construct a TSS Segment Descriptor for GDT.
  *
- * @param base Base address of the TSS.
+ * @param base  Base address of the TSS.
  * @param limit Size of the TSS in bytes.
  */
 #define TSS_DESC(base, limit) ((tss_desc_t) {                          \

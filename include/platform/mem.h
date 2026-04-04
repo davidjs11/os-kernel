@@ -1,12 +1,14 @@
-/*   include/platform/mmap.h   */
+/*   include/platform/mem.h   */
 
-/* Platform-specific memory map related code. */
+/* Platform-specific memory management functionality. */
 
-#ifndef KERNEL_API_PLATFORM_MMAP_H
-#define KERNEL_API_PLATFORM_MMAP_H
+#ifndef KERNEL_API_PLATFORM_MEM_H
+#define KERNEL_API_PLATFORM_MEM_H
 
 #include <stdint.h>
 #include <stddef.h>
+
+#define PAGE_SIZE 4096
 
 /* Memory map region types. */
 typedef enum mmap_type {
@@ -20,7 +22,7 @@ typedef enum mmap_type {
     MMAP_FRAMEBUFFER,
 } mmap_type_t;
 
-/* Memory map entry, same as Limine bootloader. */
+/* Memory map entry. */
 typedef struct mmap_entry {
     uint64_t base;
     uint64_t size;
@@ -33,6 +35,12 @@ typedef struct mmap_entry {
  * @return A pointer to the memory map entries array, finishing with a NULL
  * entry (base = NULL).
  */
-mmap_entry_t *platform_mmap_get(void);
+mmap_entry_t *platform_mem_get_mmap(void);
 
-#endif /* KERNEL_API_PLATFORM_MMAP_H */
+/*
+ * @brief Obtain higher half memory offset in case it's available (otherwise
+ * 0).
+ */
+uint64_t platform_mem_get_hh_offset(void);
+
+#endif /* KERNEL_API_PLATFORM_MEM_H */

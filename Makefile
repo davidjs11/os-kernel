@@ -22,7 +22,10 @@ include arch/$(ARCH)/platform/$(PLATFORM)/platform.mk
 include config.mk
 
 # Input source files and output object files.
-SUBDIRS					= arch/$(ARCH) arch/$(ARCH)/platform/$(PLATFORM) kernel
+SUBDIRS					= arch/$(ARCH)                      \
+						  arch/$(ARCH)/platform/$(PLATFORM) \
+						  kernel                            \
+						  kernel/pmm
 SOURCES_C				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 SOURCES_ASM				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.S))
 INCLUDE					= include

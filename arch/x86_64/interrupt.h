@@ -43,10 +43,10 @@ typedef struct __attribute__((packed)) idt {
 /*
  * @brief Construct an interrupt or trap gate.
  *
- * @param handler Address of the raw ASM entry stub.
- * @param sel CS selector (use SEL_KCODE for all kernel handlers).
- * @param ist_idx 0-7 IST slot (0 = legacy RSP0 switching).
- * @param gate_dpl DPL (0 = kernel-only, 3 = user-invokable).
+ * @param handler   Address of the raw ASM entry stub.
+ * @param sel       CS selector (use SEL_KCODE for all kernel handlers).
+ * @param ist_idx   0-7 IST slot (0 = legacy RSP0 switching).
+ * @param gate_dpl  DPL (0 = kernel-only, 3 = user-invokable).
  * @param gate_type IDT_TYPE_INTERRUPT or IDT_TYPE_TRAP.
  */
 #define IDT_GATE(handler, sel, ist_idx, gate_dpl, gate_type) ((idt_gate_t) { \

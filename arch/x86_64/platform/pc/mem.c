@@ -1,8 +1,8 @@
-/*   arch/x86_64/platform/pc/mmap.c   */
+/*   arch/x86_64/platform/pc/mem.c   */
 
-/* Implementation of PC platform-specific memory map functionality. */
+/* Implementation of PC platform-specific memory management functionality. */
 
-#include <platform/mmap.h>
+#include <platform/mem.h>
 #include "limine.h"
 
 /* Limine memory map request. */
@@ -12,11 +12,19 @@ volatile struct limine_memmap_request limine_memmap_request = {
     .revision = 0,
 };
 
+/* Limine higher half direct mapping request. */
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_hhdm_request limine_hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST_ID,
+    .revision = 0,
+};
+
 /* Kernel's own copy of the memory map. */
 #define MMAP_ENTRIES_MAX 64
 static mmap_entry_t mmap_entry[MMAP_ENTRIES_MAX];
 
-static inline mmap_type_t limine_to_kernel_type(uint64_t type) {
+static inline mmap_type_t limine_to_kernel_type(uint64_t type)
+{
     switch (type) {
         case LIMINE_MEMMAP_USABLE:                 return MMAP_USABLE;
         case LIMINE_MEMMAP_RESERVED:               return MMAP_RESERVED;
@@ -30,17 +38,17 @@ static inline mmap_type_t limine_to_kernel_type(uint64_t type) {
     }
 }
 
-mmap_entry_t *platform_mmap_get()
+mmap_entry_t *platform_mem_get_mmap()
 {
     struct limine_memmap_response *limine_mmap =
         limine_memmap_request.response;
-    size_t i = 0;
 
-    if (!limine_mmap) {
+    if (limine_mmap == NULL) {
         __asm__ volatile ("cli; hlt");
     }
 
     /* Copy entries from Limine memory to kernel memory. */
+    size_t i = 0;
     for (i = 0; i < limine_mmap->entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
         mmap_entry[i] = (mmap_entry_t) {
             .base  = limine_mmap->entries[i]->base,
@@ -58,4 +66,13 @@ mmap_entry_t *platform_mmap_get()
     };
 
     return &mmap_entry[0];
+}
+
+uint64_t platform_mem_get_hh_offset(void)
+{
+    if (limine_hhdm_request.response == NULL) {
+        __asm__ volatile ("cli; hlt");
+    }
+
+    return limine_hhdm_request.response->offset;
 }

@@ -3,14 +3,16 @@
 /* Kernel main entry point. */
 
 #include <arch.h>
-#include <platform/mmap.h>
+#include <pmm.h>
+#include <list.h>
 
 /*
  * @brief Kernel entry point.
  */
-void kmain(void) {
+void kmain(void)
+{
     arch_init();
-    mmap_entry_t *mmap = platform_mmap_get();
+    pmm_init();
 
     for (;;);
     return;

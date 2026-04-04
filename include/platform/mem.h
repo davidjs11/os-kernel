@@ -8,8 +8,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define PAGE_SIZE 4096
-
 /* Memory map region types. */
 typedef enum mmap_type {
     MMAP_USABLE = 0,

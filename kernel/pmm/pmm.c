@@ -3,15 +3,38 @@
 /* Kernel physical memory manager. */
 
 #include <platform/mem.h>
+#include <arch.h>
 #include <pmm.h>
 #include "freelist.h"
 
-static uint64_t hh_offset = 0;
-pmm_algorithm_t pmm_algorithm = PMM_ALGORITHM_FREELIST;
+pmm_algorithm_t pmm_algorithm = _PMM_ALGORITHM_FREELIST;
 
-void pmm_init(void)
+void pmm_init(pmm_algorithm_name_t pmm_algorithm_name)
 {
-    pmm_algorithm.init();
+    mmap_entry_t *mmap = platform_mem_get_mmap();
+
+    /* Initialize PMM algorithm. */
+    switch (pmm_algorithm_name) {
+        case PMM_ALGORITHM_FREELIST:
+        default:
+            pmm_algorithm = _PMM_ALGORITHM_FREELIST;
+            break;
+    }
+    pmm_algorithm.init(platform_mem_get_hh_offset());
+
+    /* Build free frame list. */
+    for (size_t i = 0; mmap[i].base != 0 && mmap[i].size != 0; i++) {
+        /* Skip unusable regions. */
+        if (mmap[i].type != MMAP_USABLE) {
+            continue;
+        }
+
+        uintptr_t start = mmap[i].base;
+        uintptr_t end = start + mmap[i].size;
+        for (uintptr_t page = start; page < end; page += PAGE_SIZE) {
+            pmm_algorithm.free(page);
+        }
+    }
 }
 
 uintptr_t pmm_alloc(void)

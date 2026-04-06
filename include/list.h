@@ -60,7 +60,10 @@ static inline void list_init(list_node_t *head)
  * @param prev The previous node.
  * @param next The next node.
  */
-static inline void list_insert(list_node_t *node, list_node_t *prev, list_node_t *next)
+static inline void list_insert(
+    list_node_t *node,
+    list_node_t *prev,
+    list_node_t *next)
 {
     if (node == NULL || prev == NULL || next == NULL) {
         return;

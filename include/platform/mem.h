@@ -1,6 +1,6 @@
 /*   include/platform/mem.h   */
 
-/* Platform-specific memory management functionality. */
+/* Platform-specific memory management interface. */
 
 #ifndef KERNEL_API_PLATFORM_MEM_H
 #define KERNEL_API_PLATFORM_MEM_H

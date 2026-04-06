@@ -1,6 +1,6 @@
 /*   arch/x86_64/include/interrupt.h   */
 
-/**
+/*
  * x86-64 interrupt and exception handling.
  *
  * References

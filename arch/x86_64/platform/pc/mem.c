@@ -67,6 +67,8 @@ mmap_entry_t *platform_mem_get_mmap()
             .size = 0,
             .type = 0,
         };
+
+        mmap_copied = true;
     }
 
     return &mmap_entry[0];

@@ -3,6 +3,7 @@
 /* Implementation of PC platform-specific memory management functionality. */
 
 #include <platform/mem.h>
+#include <types.h>
 #include "limine.h"
 
 /* Limine memory map request. */
@@ -22,6 +23,7 @@ volatile struct limine_hhdm_request limine_hhdm_request = {
 /* Kernel's own copy of the memory map. */
 #define MMAP_ENTRIES_MAX 64
 static mmap_entry_t mmap_entry[MMAP_ENTRIES_MAX];
+bool mmap_copied = false;
 
 static inline mmap_type_t limine_to_kernel_type(uint64_t type)
 {
@@ -40,30 +42,32 @@ static inline mmap_type_t limine_to_kernel_type(uint64_t type)
 
 mmap_entry_t *platform_mem_get_mmap()
 {
-    struct limine_memmap_response *limine_mmap =
-        limine_memmap_request.response;
+    if (!mmap_copied) {
+        struct limine_memmap_response *limine_mmap =
+            limine_memmap_request.response;
 
-    if (limine_mmap == NULL) {
-        __asm__ volatile ("cli; hlt");
-    }
+        if (limine_mmap == NULL) {
+            __asm__ volatile ("cli; hlt");
+        }
 
-    /* Copy entries from Limine memory to kernel memory. */
-    size_t i = 0;
-    for (i = 0; i < limine_mmap->entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
+        /* Copy entries from Limine memory to kernel memory. */
+        size_t i = 0;
+        for (; i < limine_mmap->entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
+            mmap_entry[i] = (mmap_entry_t) {
+                .base  = limine_mmap->entries[i]->base,
+                .size = limine_mmap->entries[i]->length,
+                .type  = limine_to_kernel_type(limine_mmap->entries[i]->type),
+            };
+        }
+
+        /* TODO: use memset when available. */
+        /* Null sentinel entry that marks end of the map. */
         mmap_entry[i] = (mmap_entry_t) {
-            .base  = limine_mmap->entries[i]->base,
-            .size = limine_mmap->entries[i]->length,
-            .type  = limine_to_kernel_type(limine_mmap->entries[i]->type),
+            .base = 0,
+            .size = 0,
+            .type = 0,
         };
     }
-
-    /* TODO: use memset when available. */
-    /* Null sentinel entry that marks end of the map. */
-    mmap_entry[i] = (mmap_entry_t) {
-        .base = 0,
-        .size = 0,
-        .type = 0,
-    };
 
     return &mmap_entry[0];
 }

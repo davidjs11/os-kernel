@@ -6,14 +6,13 @@
 #include <stddef.h>
 #include "segment.h"
 #include "interrupt.h"
-// #include "paging.h"
+#include "pgtable.h"
 
 void arch_init(void)
 {
     segment_init();
     interrupt_init();
     interrupt_enable();
-    // paging_init();
 
     /* Trigger #PF exception */
     // volatile uint64_t *p = (uint64_t *)0xdeadbeef;

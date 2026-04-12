@@ -3,7 +3,7 @@
 /* Kernel physical memory manager. */
 
 #include <platform/mem.h>
-#include <arch.h>
+#include <arch/paging.h>
 #include <pmm.h>
 #include "freelist.h"
 
@@ -39,7 +39,12 @@ void pmm_init(pmm_algorithm_name_t pmm_algorithm_name)
 
 uintptr_t pmm_alloc(void)
 {
-    return pmm_algorithm.alloc();
+    uintptr_t page = pmm_algorithm.alloc();
+    if (page == 0) {
+        /* TODO: panic. */
+    }
+
+    return page;
 }
 
 void pmm_free(uintptr_t addr)

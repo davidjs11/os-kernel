@@ -117,7 +117,7 @@ static uint64_t flags_kernel_to_pte(mmu_flags_t flags)
 
 void arch_paging_init()
 {
-    hhdm_offset = platform_mem_get_hh_offset();
+    hhdm_offset = platform_mem_get_hhdm_offset();
 }
 
 paddr_t arch_paging_space_create(void)

@@ -74,7 +74,7 @@ mmap_entry_t *platform_mem_get_mmap()
     return &mmap_entry[0];
 }
 
-uint64_t platform_mem_get_hh_offset(void)
+uint64_t platform_mem_get_hhdm_offset(void)
 {
     if (limine_hhdm_request.response == NULL) {
         __asm__ volatile ("cli; hlt");

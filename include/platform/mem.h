@@ -39,6 +39,6 @@ mmap_entry_t *platform_mem_get_mmap(void);
  * @brief Obtain higher half memory offset in case it's available (otherwise
  * 0).
  */
-uint64_t platform_mem_get_hh_offset(void);
+uint64_t platform_mem_get_hhdm_offset(void);
 
 #endif /* KERNEL_API_PLATFORM_MEM_H */

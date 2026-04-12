@@ -10,10 +10,10 @@
 
 /* PMM algorithm interface. Each algorithm MUST implement these functions. */
 typedef struct pmm_algorithm {
-    void      (*init)(uintptr_t hh_offset); /* Initialize algorithm data. */
-    uintptr_t (*alloc)(void);               /* Allocate a page. */
-    void      (*free)(uintptr_t addr);      /* Mark a page as free. */
-    size_t    (*available)(void);           /* Number of free pages. */
+    void      (*init)(uintptr_t hhdm_offset); /* Initialize algorithm data. */
+    uintptr_t (*alloc)(void);                 /* Allocate a page. */
+    void      (*free)(uintptr_t addr);        /* Mark a page as free. */
+    size_t    (*available)(void);             /* Number of free pages. */
 } pmm_algorithm_t;
 
 typedef enum pmm_algorithm_name {

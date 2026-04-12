@@ -14,7 +14,7 @@
     .available = pmm_freelist_available,            \
 }
 
-void pmm_freelist_init(uint64_t hh_offset);
+void pmm_freelist_init(uint64_t hhdm_offset);
 uintptr_t pmm_freelist_alloc(void);
 void pmm_freelist_free(uintptr_t addr);
 size_t pmm_freelist_available(void);

@@ -4,13 +4,13 @@
 
 #include "freelist.h"
 
-static uint64_t kernel_hh_offset = 0;
+static uint64_t kernel_hhdm_offset = 0;
 static uintptr_t list_top = 0;
 static size_t available_pages = 0;
 
-void pmm_freelist_init(uint64_t hh_offset)
+void pmm_freelist_init(uint64_t hhdm_offset)
 {
-    kernel_hh_offset = hh_offset;
+    kernel_hhdm_offset = hhdm_offset;
 }
 
 uintptr_t pmm_freelist_alloc(void)
@@ -23,7 +23,7 @@ uintptr_t pmm_freelist_alloc(void)
     }
 
     /* Top of the list now points to the next entry */
-    list_top = *((uintptr_t *) (list_top + kernel_hh_offset));
+    list_top = *((uintptr_t *) (list_top + kernel_hhdm_offset));
     available_pages--;
 
     return addr;
@@ -36,7 +36,7 @@ void pmm_freelist_free(uintptr_t addr)
         return;
     }
 
-    *((uintptr_t *) (kernel_hh_offset + addr)) = list_top;
+    *((uintptr_t *) (kernel_hhdm_offset + addr)) = list_top;
     list_top = addr;
     available_pages++;
 }

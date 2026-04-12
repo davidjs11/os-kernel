@@ -2,18 +2,7 @@
 
 #include "segment.h"
 #include <stddef.h>
-
-/* TODO: move this to another module. */
-void *memset(void *s, int c, size_t n)
-{
-    register unsigned char *ptr = (unsigned char *) s;
-
-    while (n--) {
-        *ptr++ = (unsigned char) c;
-    }
-
-    return s;
-};
+#include <libc/string.h>
 
 /* GDT and TSS declaration. */
 __attribute__((aligned(16))) static gdt_t gdt; /* General Descriptor Table. */

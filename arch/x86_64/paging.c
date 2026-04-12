@@ -4,11 +4,30 @@
 
 #include <arch/paging.h>
 #include <platform/mem.h>
+#include <libc/string.h>
 #include <pmm.h>
 #include "pgtable.h"
 
-/* Physical address of the Higher Half Direct Mapping (HHDM) offset. */
+/* Virtual address of the Higher Half Direct Mapping (HHDM) offset. */
 static uint64_t hhdm_offset = 0;
+
+/* Physical address of the kernel. */
+static paddr_t kernel_paddr = 0;
+
+/* Virtual address of the kernel. */
+static vaddr_t kernel_vaddr = 0;
+
+/* Size of the kernel executable. */
+static size_t kernel_size = 0;
+
+/* First byte of the kernel executable. Must be defined by the linker script. */
+extern char kernel_start[];
+
+/* Last byte of the kernel executable. Must be defined by the linker script. */
+extern char kernel_end[];
+
+/* Physical address of the kernel space PML4. */
+static paddr_t kernel_space = 0;
 
 /*
  * @brief Obtain the contents of the CR3 register.
@@ -63,23 +82,27 @@ static inline void flush_tlb(vaddr_t virt)
 static pte_t *pgtable_get_pte(paddr_t space, vaddr_t vaddr)
 {
     pte_t *pml4, *pdpt, *pd, *pt;
+    paddr_t new_addr;
 
     pml4 = (pte_t *) (PTE_ADDR(space) + hhdm_offset);
     if (!(pml4[PML4_INDEX(vaddr)] & PTE_PRESENT)) {
-        pml4[PML4_INDEX(vaddr)] = pmm_alloc() | PTE_PRESENT;
-        /* TODO: memset() */
+        new_addr = pmm_alloc();
+        memset((void *) new_addr + hhdm_offset, 0, PAGE_SIZE);
+        pml4[PML4_INDEX(vaddr)] = new_addr | PTE_PRESENT;
     }
 
     pdpt = (pte_t *) (PTE_ADDR(pml4[PML4_INDEX(vaddr)]) + hhdm_offset);
     if (!(pdpt[PDPT_INDEX(vaddr)] & PTE_PRESENT)) {
-        pdpt[PDPT_INDEX(vaddr)] = pmm_alloc() | PTE_PRESENT;
-        /* TODO: memset() */
+        new_addr = pmm_alloc();
+        memset((void *) new_addr + hhdm_offset, 0, PAGE_SIZE);
+        pdpt[PDPT_INDEX(vaddr)] = new_addr | PTE_PRESENT;
     }
 
     pd = (pte_t *) (PTE_ADDR(pdpt[PDPT_INDEX(vaddr)]) + hhdm_offset);
     if (!(pd[PD_INDEX(vaddr)] & PTE_PRESENT)) {
-        pd[PD_INDEX(vaddr)] = pmm_alloc() | PTE_PRESENT;
-        /* TODO: memset() */
+        new_addr = pmm_alloc();
+        memset((void *) new_addr + hhdm_offset, 0, PAGE_SIZE);
+        pd[PD_INDEX(vaddr)] = new_addr | PTE_PRESENT;
     }
 
     pt = (pte_t *) (PTE_ADDR(pd[PD_INDEX(vaddr)]) + hhdm_offset);
@@ -91,12 +114,12 @@ static mmu_flags_t flags_pte_to_kernel(uint64_t flags)
 {
     mmu_flags_t kernel_flags = 0;
 
-    if (flags & PTE_PRESENT) kernel_flags |= MMU_PRESENT;
-    if (flags & PTE_WRITE)   kernel_flags |= MMU_WRITE;
-    if (flags & PTE_USER)    kernel_flags |= MMU_USER;
-    if (flags & PTE_DIRTY)   kernel_flags |= MMU_DIRTY;
-    if (flags & PTE_HUGE)    kernel_flags |= MMU_HUGE;
-    if (!(flags & PTE_NX))   kernel_flags |= MMU_EXEC;
+    if (flags & PTE_PRESENT) kernel_flags |= PAGE_PRESENT;
+    if (flags & PTE_WRITE)   kernel_flags |= PAGE_WRITE;
+    if (flags & PTE_USER)    kernel_flags |= PAGE_USER;
+    if (flags & PTE_DIRTY)   kernel_flags |= PAGE_DIRTY;
+    if (flags & PTE_HUGE)    kernel_flags |= PAGE_HUGE;
+    if (!(flags & PTE_NX))   kernel_flags |= PAGE_EXEC;
 
     return kernel_flags;
 }
@@ -105,12 +128,12 @@ static uint64_t flags_kernel_to_pte(mmu_flags_t flags)
 {
     uint64_t pte_flags = 0;
 
-    if (flags & MMU_PRESENT) pte_flags |= PTE_PRESENT;
-    if (flags & MMU_WRITE)   pte_flags |= PTE_WRITE;
-    if (flags & MMU_USER)    pte_flags |= PTE_USER;
-    if (flags & MMU_DIRTY)   pte_flags |= PTE_DIRTY;
-    if (flags & MMU_HUGE)    pte_flags |= PTE_HUGE;
-    if (!(flags & MMU_EXEC)) pte_flags |= PTE_NX;
+    if (flags & PAGE_PRESENT) pte_flags |= PTE_PRESENT;
+    if (flags & PAGE_WRITE)   pte_flags |= PTE_WRITE;
+    if (flags & PAGE_USER)    pte_flags |= PTE_USER;
+    if (flags & PAGE_DIRTY)   pte_flags |= PTE_DIRTY;
+    if (flags & PAGE_HUGE)    pte_flags |= PTE_HUGE;
+    if (!(flags & PAGE_EXEC)) pte_flags |= PTE_NX;
 
     return pte_flags;
 }
@@ -118,12 +141,42 @@ static uint64_t flags_kernel_to_pte(mmu_flags_t flags)
 void arch_paging_init()
 {
     hhdm_offset = platform_mem_get_hhdm_offset();
+    kernel_vaddr = platform_mem_get_kernel_vaddr();
+    kernel_paddr = platform_mem_get_kernel_paddr();
+    kernel_size = (vaddr_t) kernel_end - (vaddr_t) kernel_start;
+    
+    kernel_space = arch_paging_space_create();
+
+    /* Map all physical memory to HHDM area. */
+    mmap_entry_t *mmap = platform_mem_get_mmap();
+    while (mmap->base != 0 || mmap->size != 0 || mmap->type != 0) {
+        arch_paging_map_range(
+            kernel_space,
+            mmap->base + hhdm_offset,
+            mmap->base,
+            mmap->size / PAGE_SIZE,
+            PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
+        );
+        mmap++;
+    }
+
+    /* Map kernel executable to kernel virtual memory region. */
+    /* TODO: map .text, .data etc regions and set correspondent permissions. */
+    arch_paging_map_range(
+        kernel_space,
+        kernel_vaddr,
+        kernel_paddr,
+        kernel_size / PAGE_SIZE,
+        PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
+    );
+
+    arch_paging_space_load(kernel_space);
 }
 
 paddr_t arch_paging_space_create(void)
 {
     paddr_t space = pmm_alloc();
-    /* TODO: memset(0). */
+    memset((void *) space + hhdm_offset, 0, PAGE_SIZE);
     return space;
 }
 

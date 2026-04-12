@@ -19,13 +19,13 @@
 /* Kernel-specific page flags. */
 typedef uint32_t mmu_flags_t;
 
-#define MMU_READ     (1 << 0) /* Read.           */
-#define MMU_WRITE    (1 << 1) /* Write.          */
-#define MMU_EXEC     (1 << 2) /* Execute.        */
-#define MMU_USER     (1 << 3) /* User-space.     */
-#define MMU_HUGE     (1 << 4) /* Huge page size. */
-#define MMU_PRESENT  (1 << 5) /* Present.        */
-#define MMU_DIRTY    (1 << 6) /* Dirty.          */
+#define PAGE_READ     (1 << 0) /* Read.           */
+#define PAGE_WRITE    (1 << 1) /* Write.          */
+#define PAGE_EXEC     (1 << 2) /* Execute.        */
+#define PAGE_USER     (1 << 3) /* User-space.     */
+#define PAGE_HUGE     (1 << 4) /* Huge page size. */
+#define PAGE_PRESENT  (1 << 5) /* Present.        */
+#define PAGE_DIRTY    (1 << 6) /* Dirty.          */
 
 /*
  * @brief Initialize paging.

@@ -3,6 +3,7 @@
 /* Implementation of PC platform-specific memory management functionality. */
 
 #include <platform/mem.h>
+#include <libc/string.h>
 #include <types.h>
 #include "limine.h"
 
@@ -20,10 +21,24 @@ volatile struct limine_hhdm_request limine_hhdm_request = {
     .revision = 0,
 };
 
+/* Limine executable address request. */
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_executable_address_request
+    limine_executable_address_request = {
+        .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
+        .revision = 0,
+};
+
 /* Kernel's own copy of the memory map. */
 #define MMAP_ENTRIES_MAX 64
 static mmap_entry_t mmap_entry[MMAP_ENTRIES_MAX];
+static uint64_t hhdm_offset;
+static paddr_t kernel_paddr;
+static vaddr_t kernel_vaddr;
 bool mmap_copied = false;
+bool hhdm_offset_copied = false;
+bool kernel_paddr_copied = false;
+bool kernel_vaddr_copied = false;
 
 static inline mmap_type_t limine_to_kernel_type(uint64_t type)
 {
@@ -60,13 +75,8 @@ mmap_entry_t *platform_mem_get_mmap()
             };
         }
 
-        /* TODO: use memset when available. */
         /* Null sentinel entry that marks end of the map. */
-        mmap_entry[i] = (mmap_entry_t) {
-            .base = 0,
-            .size = 0,
-            .type = 0,
-        };
+        memset(&mmap_entry[i], 0, sizeof(mmap_entry_t));
 
         mmap_copied = true;
     }
@@ -76,9 +86,45 @@ mmap_entry_t *platform_mem_get_mmap()
 
 uint64_t platform_mem_get_hhdm_offset(void)
 {
-    if (limine_hhdm_request.response == NULL) {
-        __asm__ volatile ("cli; hlt");
+    if (!hhdm_offset_copied) {
+        if (limine_hhdm_request.response == NULL) {
+            /* TODO: Panic here. */
+            __asm__ volatile ("cli; hlt");
+        }
+
+        hhdm_offset = limine_hhdm_request.response->offset;
+        hhdm_offset_copied = true;
     }
 
-    return limine_hhdm_request.response->offset;
+    return hhdm_offset;
+}
+
+uint64_t platform_mem_get_kernel_vaddr(void)
+{
+    if (!kernel_vaddr_copied) {
+        if (limine_executable_address_request.response == NULL) {
+            /* TODO: Panic here. */
+            __asm__ volatile ("cli; hlt");
+        }
+
+        kernel_vaddr = limine_executable_address_request.response->virtual_base;
+        kernel_vaddr_copied = true;
+    }
+
+    return kernel_vaddr;
+}
+
+uint64_t platform_mem_get_kernel_paddr(void)
+{
+    if (!kernel_paddr_copied) {
+        if (limine_executable_address_request.response == NULL) {
+            /* TODO: Panic here. */
+            __asm__ volatile ("cli; hlt");
+        }
+
+        kernel_paddr = limine_executable_address_request.response->physical_base;
+        kernel_paddr_copied = true;
+    }
+
+    return kernel_paddr;
 }

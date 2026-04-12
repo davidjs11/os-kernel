@@ -41,4 +41,14 @@ mmap_entry_t *platform_mem_get_mmap(void);
  */
 uint64_t platform_mem_get_hhdm_offset(void);
 
+/*
+ * @brief Obtain kernel offset in physical memory.
+ */
+uint64_t platform_mem_get_kernel_paddr(void);
+
+/*
+ * @brief Obtain kernel offset in virtual memory.
+ */
+uint64_t platform_mem_get_kernel_vaddr(void);
+
 #endif /* KERNEL_API_PLATFORM_MEM_H */

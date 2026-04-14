@@ -11,24 +11,6 @@
 /* Virtual address of the Higher Half Direct Mapping (HHDM) offset. */
 static uint64_t hhdm_offset = 0;
 
-/* Physical address of the kernel. */
-static paddr_t kernel_paddr = 0;
-
-/* Virtual address of the kernel. */
-static vaddr_t kernel_vaddr = 0;
-
-/* Size of the kernel executable. */
-static size_t kernel_size = 0;
-
-/* First byte of the kernel executable. Must be defined by the linker script. */
-extern char kernel_start[];
-
-/* Last byte of the kernel executable. Must be defined by the linker script. */
-extern char kernel_end[];
-
-/* Physical address of the kernel space PML4. */
-static paddr_t kernel_space = 0;
-
 /*
  * @brief Obtain the contents of the CR3 register.
  *
@@ -140,12 +122,11 @@ static uint64_t flags_kernel_to_pte(vmm_prot_t flags)
 
 void arch_paging_init()
 {
-    hhdm_offset = platform_mem_get_hhdm_offset();
-    kernel_vaddr = platform_mem_get_kernel_vaddr();
-    kernel_paddr = platform_mem_get_kernel_paddr();
-    kernel_size = (vaddr_t) kernel_end - (vaddr_t) kernel_start;
-    
-    kernel_space = arch_paging_space_create();
+    hhdm_offset          = platform_mem_get_hhdm_vaddr();
+    vaddr_t kernel_vaddr = platform_mem_get_kernel_image_vaddr();
+    paddr_t kernel_paddr = platform_mem_get_kernel_image_paddr();
+    size_t kernel_size   = platform_mem_get_kernel_image_size();
+    paddr_t kernel_space = arch_paging_space_create();
 
     /* Map all physical memory to HHDM area. */
     mmap_entry_t *mmap = platform_mem_get_mmap();

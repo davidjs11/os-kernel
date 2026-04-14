@@ -32,14 +32,20 @@ volatile struct limine_executable_address_request
 /* Kernel's own copy of the memory map. */
 #define MMAP_ENTRIES_MAX 64
 static mmap_entry_t mmap_entry[MMAP_ENTRIES_MAX];
+static size_t mmap_entry_count;
+static size_t mem_size;
 static uint64_t hhdm_offset;
 static paddr_t kernel_paddr;
 static vaddr_t kernel_vaddr;
-bool mmap_copied = false;
-bool hhdm_offset_copied = false;
-bool kernel_paddr_copied = false;
-bool kernel_vaddr_copied = false;
+extern char kernel_image_start[];
+extern char kernel_image_end[];
+bool limine_parsed = false;
 
+/*
+ * @brief Convert from Limine memory map entry type to kernel type.
+ *
+ * @param type Type of the limine mmap entry.
+ */
 static inline mmap_type_t limine_to_kernel_type(uint64_t type)
 {
     switch (type) {
@@ -55,76 +61,122 @@ static inline mmap_type_t limine_to_kernel_type(uint64_t type)
     }
 }
 
+/*
+ * @brief Parse Limine requests.
+ */
+static void parse_limine_requests()
+{
+    bool panic = false;
+
+    /* Memory map request. */
+    struct limine_memmap_response *limine_mmap =
+        limine_memmap_request.response;
+
+    if (limine_mmap == NULL) {
+        panic = true;
+        goto done;
+    }
+
+    size_t i = 0;
+    mmap_entry_count = limine_mmap->entry_count;
+    for (; i < mmap_entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
+        /* Copy entry from Limine memory to kernel memory. */
+        mmap_entry[i] = (mmap_entry_t) {
+            .base  = limine_mmap->entries[i]->base,
+            .size  = limine_mmap->entries[i]->length,
+            .type  = limine_to_kernel_type(limine_mmap->entries[i]->type),
+        };
+
+        /* Keep track of the highest entry for obtaining memory size. */
+        paddr_t end = mmap_entry[i].base + mmap_entry[i].size;
+        if (end > mem_size) mem_size = end;
+    }
+
+    /* Null sentinel entry that marks end of the map. */
+    memset(&mmap_entry[i], 0, sizeof(mmap_entry_t));
+
+    /* HHDM request. */
+    if (limine_hhdm_request.response == NULL) {
+        panic = true;
+        goto done;
+    }
+    hhdm_offset = limine_hhdm_request.response->offset;
+
+    /* Kernel address request. */
+    if (limine_executable_address_request.response == NULL) {
+        panic = true;
+        goto done;
+    }
+    kernel_vaddr = limine_executable_address_request.response->virtual_base;
+    kernel_paddr = limine_executable_address_request.response->physical_base;
+
+done:
+    if (panic) {
+        /* TODO: Panic here. */
+    }
+}
+
 mmap_entry_t *platform_mem_get_mmap()
 {
-    if (!mmap_copied) {
-        struct limine_memmap_response *limine_mmap =
-            limine_memmap_request.response;
-
-        if (limine_mmap == NULL) {
-            __asm__ volatile ("cli; hlt");
-        }
-
-        /* Copy entries from Limine memory to kernel memory. */
-        size_t i = 0;
-        for (; i < limine_mmap->entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
-            mmap_entry[i] = (mmap_entry_t) {
-                .base  = limine_mmap->entries[i]->base,
-                .size = limine_mmap->entries[i]->length,
-                .type  = limine_to_kernel_type(limine_mmap->entries[i]->type),
-            };
-        }
-
-        /* Null sentinel entry that marks end of the map. */
-        memset(&mmap_entry[i], 0, sizeof(mmap_entry_t));
-
-        mmap_copied = true;
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
     }
 
     return &mmap_entry[0];
 }
 
-uint64_t platform_mem_get_hhdm_offset(void)
+size_t platform_mem_get_mmap_count(void)
 {
-    if (!hhdm_offset_copied) {
-        if (limine_hhdm_request.response == NULL) {
-            /* TODO: Panic here. */
-            __asm__ volatile ("cli; hlt");
-        }
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
+    }
 
-        hhdm_offset = limine_hhdm_request.response->offset;
-        hhdm_offset_copied = true;
+    return mmap_entry_count;
+}
+
+size_t platform_mem_get_size(void)
+{
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
+    }
+
+    return mem_size;
+}
+
+uint64_t platform_mem_get_hhdm_vaddr(void)
+{
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
     }
 
     return hhdm_offset;
 }
 
-uint64_t platform_mem_get_kernel_vaddr(void)
+uint64_t platform_mem_get_kernel_image_vaddr(void)
 {
-    if (!kernel_vaddr_copied) {
-        if (limine_executable_address_request.response == NULL) {
-            /* TODO: Panic here. */
-            __asm__ volatile ("cli; hlt");
-        }
-
-        kernel_vaddr = limine_executable_address_request.response->virtual_base;
-        kernel_vaddr_copied = true;
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
     }
 
     return kernel_vaddr;
 }
 
-uint64_t platform_mem_get_kernel_paddr(void)
+uint64_t platform_mem_get_kernel_image_paddr(void)
 {
-    if (!kernel_paddr_copied) {
-        if (limine_executable_address_request.response == NULL) {
-            /* TODO: Panic here. */
-            __asm__ volatile ("cli; hlt");
-        }
-
-        kernel_paddr = limine_executable_address_request.response->physical_base;
-        kernel_paddr_copied = true;
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
     }
 
     return kernel_paddr;
+}
+
+size_t platform_mem_get_kernel_image_size(void)
+{
+    return (size_t)((vaddr_t) kernel_image_end - (vaddr_t) kernel_image_start);
 }

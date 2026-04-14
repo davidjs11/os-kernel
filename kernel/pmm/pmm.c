@@ -20,7 +20,7 @@ void pmm_init(pmm_algorithm_name_t pmm_algorithm_name)
             pmm_algorithm = _PMM_ALGORITHM_FREELIST;
             break;
     }
-    pmm_algorithm.init(platform_mem_get_hhdm_offset());
+    pmm_algorithm.init(platform_mem_get_hhdm_vaddr());
 
     /* Build free frame list. */
     for (size_t i = 0; mmap[i].base != 0 && mmap[i].size != 0; i++) {

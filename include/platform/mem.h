@@ -5,8 +5,7 @@
 #ifndef KERNEL_API_PLATFORM_MEM_H
 #define KERNEL_API_PLATFORM_MEM_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <types.h>
 
 /* Memory map region types. */
 typedef enum mmap_type {
@@ -36,19 +35,45 @@ typedef struct mmap_entry {
 mmap_entry_t *platform_mem_get_mmap(void);
 
 /*
- * @brief Obtain higher half memory offset in case it's available (otherwise
- * 0).
+ * @brief Obtain the number of entries of the system's memory map.
+ *
+ * @return Number of entries in the memory map.
  */
-uint64_t platform_mem_get_hhdm_offset(void);
+size_t platform_mem_get_mmap_count(void);
 
 /*
- * @brief Obtain kernel offset in physical memory.
+ * @brief Get the size of physical memory.
+ *
+ * @return Size of the physical memory in bytes.
  */
-uint64_t platform_mem_get_kernel_paddr(void);
+size_t platform_mem_get_size(void);
 
 /*
- * @brief Obtain kernel offset in virtual memory.
+ * @brief Obtain higher half memory region offset virtual address.
+ *
+ * @return Offset of the HHDM region in the virtual address space.
  */
-uint64_t platform_mem_get_kernel_vaddr(void);
+vaddr_t platform_mem_get_hhdm_vaddr(void);
+
+/*
+ * @brief Obtain the kernel image offset in physical memory.
+ *
+ * @return Offset of the kernel image in the physical address space.
+ */
+paddr_t platform_mem_get_kernel_image_paddr(void);
+
+/*
+ * @brief Obtain the kernel image offset in virtual memory.
+ *
+ * @return Offset of the kernel image region in the virtual address space.
+ */
+vaddr_t platform_mem_get_kernel_image_vaddr(void);
+
+/*
+ * @brief Get the size of the kernel image.
+ *
+ * @return Size of the kernel image in bytes.
+ */
+size_t platform_mem_get_kernel_image_size(void);
 
 #endif /* KERNEL_API_PLATFORM_MEM_H */

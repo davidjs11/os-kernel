@@ -17,7 +17,7 @@ PHDRS
 SECTIONS
 {
     . = 0xffffffff80000000;
-    kernel_start = .;
+    kernel_image_start = .;
 
     /* --- limine_requests --- */
     .limine_requests : {
@@ -61,5 +61,5 @@ SECTIONS
         *(.note .note.*)
     }
 
-    kernel_end = .;
+    kernel_image_end = .;
 }

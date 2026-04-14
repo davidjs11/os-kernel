@@ -1,0 +1,201 @@
+/*   include/vmm.h   */
+
+/* Virtual memory manager API. */
+
+#ifndef KERNEL_API_VMM_H
+#define KERNEL_API_VMM_H
+
+#include <types.h>
+#include <list.h>
+
+/* Page macros. */
+#define PAGE_SIZE             4096UL
+#define PAGE_SHIFT            12
+#define PAGE_ALIGN(addr)      (((addr) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+#define PAGE_ALIGN_DOWN(addr) ((addr) & ~(PAGE_SIZE - 1))
+
+/* Kernel-specific page flags. */
+typedef uint32_t mmu_flags_t;
+
+#define PAGE_READ    (1 << 0) /* Read.           */
+#define PAGE_WRITE   (1 << 1) /* Write.          */
+#define PAGE_EXEC    (1 << 2) /* Execute.        */
+#define PAGE_USER    (1 << 3) /* User-space.     */
+#define PAGE_HUGE    (1 << 4) /* Huge page size. */
+#define PAGE_PRESENT (1 << 5) /* Present.        */
+#define PAGE_DIRTY   (1 << 6) /* Dirty.          */
+
+/* Virtual memory address space. */
+typedef struct vmm_space {
+    paddr_t     pt_phys; /* Root page table's physical address. */
+    list_node_t regions; /* List head of the regions.           */
+} vmm_space_t;
+
+/* Virtual memory object. */
+typedef struct vmm_object {
+    int                     refcount; /* Number of processes with the object. */
+    size_t                  size;     /* Size in bytes of the memory object.  */
+    struct vmm_object_ops_t *ops;     /* Operations of the object.            */
+    union {
+        /* Physical memory. */
+        struct { paddr_t base; } phys;
+
+        /* Anonymous memory. */
+        struct { /* anon state */ } anon;
+
+        /* File-backed memory. */
+        struct { int fd; size_t offset; } file;
+    };
+} vmm_object_t;
+
+/* Virtual memory region. */
+typedef struct vmm_region {
+    vaddr_t                 addr;    /* Virtual address.                */
+    vmm_space_t             *space;  /* Space this region belongs to.   */
+    vmm_object_t            *object; /* Object of this region.          */
+    size_t                  offset;  /* Offset into the object.         */
+    mmu_flags_t             prot;    /* Memory protection flags.        */
+    struct vmm_region_ops_t *ops;    /* Operations of the region.       */
+    list_node_t             node;    /* Node on the regions list.       */
+} vmm_region_t;
+
+/* Operations performed for each memory region. */
+typedef struct vmm_object_ops {
+    /*
+     * @brief Handle a page fault (map the object into memory).
+     *
+     * @param obj    Object for which the mapping will be done.
+     * @param space  Space in which to handle the page fault.
+     * @param addr   Address that the object will be mapped to.
+     * @param offset Offset inside the object.
+     * @param flags  Flags of the fault.
+     *
+     * @return Result of the operation (0 on succeed).
+     */
+    int (*fault)(
+            vmm_object_t *obj,
+            vmm_space_t *space,
+            vaddr_t addr,
+            size_t offset,
+            int flags);
+
+    /*
+     * @brief Handle a refcount = 0 of the memory object.
+     *
+     * @param obj Object for which the mapping will be done.
+     */
+    void (*release)(vmm_object_t *obj);
+} vmm_object_ops_t;
+
+/*
+ * @brief Initialize paging and create kernel virtual memory address space.
+ */
+void vmm_init(void);
+
+/*
+ * @brief Create a new address space.
+ *
+ * @return The new address space.
+ */
+vmm_space_t *vmm_space_create(void);
+
+/*
+ * @brief Add a memory region to an address space.
+ *
+ * This function ensures these conditions:
+ *  - New region doesn't overlap with other regions.
+ *  - Regions is addred in address order.
+ *
+ * @param space  The address space in which to add the region.
+ * @param region The region to add.
+ *
+ * @return -1 if the operation fails.
+ */
+void vmm_space_add_region(vmm_space_t *space, vmm_region_t *region);
+
+/*
+ * @brief Delete an address space.
+ *
+ * @param space The address space to be deleted.
+ */
+void vmm_space_delete(vmm_space_t *space);
+
+/*
+ * @brief Switch current address space.
+ *
+ * @param space The address space that will be loaded.
+ */
+void vmm_space_switch(vmm_space_t *space);
+
+/*
+ * @brief Create a new memory region.
+ *
+ * This function ensures these conditions:
+ *  - Address is page-aligned.
+ *  - Size is page-aligned.
+ *  - Address is in canonical form.
+ *
+ * @param addr Starting address of the region.
+ * @param size Size of the region in bytes.
+ * @param prot Memory protection flags (R/W/X).
+ *
+ * @return A pointer to the new created region.
+ */
+vmm_region_t *vmm_region_create(
+        vaddr_t addr,
+        size_t size,
+        mmu_flags_t prot);
+
+/*
+ * @brief Delete a memory region.
+ *
+ * @param region The region that will be deleted.
+ */
+void vmm_region_delete(vmm_region_t *region);
+
+/*
+ * @brief Get the region of a memory space that contains a certain virtual
+ *        memory address.
+ *
+ * @param space Memory space in which the region will be searched.
+ * @param addr  Virtual memory address whose region will be searched.
+ *
+ * @return A pointer to the memory region that contains the virtual address.
+ */
+vmm_region_t *vmm_region_find(vmm_space_t *space, vaddr_t addr);
+
+/*
+ * @brief Set the backing object of a region.
+ * 
+ * @param region Region whose object will be set.
+ * @param obj    Object to set.
+ */
+void vmm_region_set_object(vmm_region_t *region, vmm_object_t *obj);
+
+/*
+ * @brief Create an anonymous memory object.
+ *
+ * @param base Physical address of the memory object base.
+ * @param size Size in bytes of the memory object.
+ *
+ * @return A pointer to the anonymous memory object.
+ */
+vmm_object_t *vmm_object_create_phys(paddr_t base, size_t size);
+
+/*
+ * @brief Create an anonymous memory object.
+ *
+ * @param size Size in bytes of the memory object.
+ *
+ * @return A pointer to the anonymous memory object.
+ */
+vmm_object_t *vmm_object_create_anon(size_t size);
+
+/*
+ * @brief Delete a memory object.
+ * 
+ * @param obj Object to delete.
+ */
+void vmm_object_delete(vmm_object_t *obj);
+
+#endif /* KERNEL_API_VMM_H */

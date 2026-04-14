@@ -87,22 +87,22 @@ static pte_t *pgtable_get_pte(paddr_t space, vaddr_t vaddr)
     pml4 = (pte_t *) (PTE_ADDR(space) + hhdm_offset);
     if (!(pml4[PML4_INDEX(vaddr)] & PTE_PRESENT)) {
         new_addr = pmm_alloc();
-        memset((void *) new_addr + hhdm_offset, 0, PAGE_SIZE);
-        pml4[PML4_INDEX(vaddr)] = new_addr | PTE_PRESENT;
+        memset((void *) (new_addr + hhdm_offset), 0, PAGE_SIZE);
+        pml4[PML4_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE;
     }
 
     pdpt = (pte_t *) (PTE_ADDR(pml4[PML4_INDEX(vaddr)]) + hhdm_offset);
     if (!(pdpt[PDPT_INDEX(vaddr)] & PTE_PRESENT)) {
         new_addr = pmm_alloc();
-        memset((void *) new_addr + hhdm_offset, 0, PAGE_SIZE);
-        pdpt[PDPT_INDEX(vaddr)] = new_addr | PTE_PRESENT;
+        memset((void *) (new_addr + hhdm_offset), 0, PAGE_SIZE);
+        pdpt[PDPT_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE;
     }
 
     pd = (pte_t *) (PTE_ADDR(pdpt[PDPT_INDEX(vaddr)]) + hhdm_offset);
     if (!(pd[PD_INDEX(vaddr)] & PTE_PRESENT)) {
         new_addr = pmm_alloc();
-        memset((void *) new_addr + hhdm_offset, 0, PAGE_SIZE);
-        pd[PD_INDEX(vaddr)] = new_addr | PTE_PRESENT;
+        memset((void *) (new_addr + hhdm_offset), 0, PAGE_SIZE);
+        pd[PD_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE;
     }
 
     pt = (pte_t *) (PTE_ADDR(pd[PD_INDEX(vaddr)]) + hhdm_offset);
@@ -149,14 +149,21 @@ void arch_paging_init()
 
     /* Map all physical memory to HHDM area. */
     mmap_entry_t *mmap = platform_mem_get_mmap();
-    while (mmap->base != 0 || mmap->size != 0 || mmap->type != 0) {
-        arch_paging_map_range(
-            kernel_space,
-            mmap->base + hhdm_offset,
-            mmap->base,
-            mmap->size / PAGE_SIZE,
-            PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
-        );
+    size_t mmap_count = platform_mem_get_mmap_count();
+    for (size_t i = 0; i < mmap_count; i++) {
+        if (mmap->type == MMAP_USABLE ||
+            mmap->type == MMAP_BOOTLOADER_RECLAIMABLE ||
+            mmap->type == MMAP_KERNEL_AND_MODULES ||
+            mmap->type == MMAP_ACPI_RECLAIMABLE ||
+            mmap->type == MMAP_FRAMEBUFFER) {
+            arch_paging_map_range(
+                kernel_space,
+                mmap->base + hhdm_offset,
+                mmap->base,
+                PAGE_ALIGN(mmap->size) / PAGE_SIZE,
+                PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
+            );
+        }
         mmap++;
     }
 
@@ -166,7 +173,7 @@ void arch_paging_init()
         kernel_space,
         kernel_vaddr,
         kernel_paddr,
-        kernel_size / PAGE_SIZE,
+        PAGE_ALIGN(kernel_size) / PAGE_SIZE,
         PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
     );
 
@@ -176,7 +183,7 @@ void arch_paging_init()
 paddr_t arch_paging_space_create(void)
 {
     paddr_t space = pmm_alloc();
-    memset((void *) space + hhdm_offset, 0, PAGE_SIZE);
+    memset((void *) (space + hhdm_offset), 0, PAGE_SIZE);
     return space;
 }
 

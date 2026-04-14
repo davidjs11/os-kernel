@@ -9,23 +9,7 @@
 #define KERNEL_API_ARCH_PAGING_H
 
 #include <types.h>
-
-/* Page macros. */
-#define PAGE_SIZE             4096UL
-#define PAGE_SHIFT            12
-#define PAGE_ALIGN(addr)      (((addr) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
-#define PAGE_ALIGN_DOWN(addr) ((addr) & ~(PAGE_SIZE - 1))
-
-/* Kernel-specific page flags. */
-typedef uint32_t mmu_flags_t;
-
-#define PAGE_READ     (1 << 0) /* Read.           */
-#define PAGE_WRITE    (1 << 1) /* Write.          */
-#define PAGE_EXEC     (1 << 2) /* Execute.        */
-#define PAGE_USER     (1 << 3) /* User-space.     */
-#define PAGE_HUGE     (1 << 4) /* Huge page size. */
-#define PAGE_PRESENT  (1 << 5) /* Present.        */
-#define PAGE_DIRTY    (1 << 6) /* Dirty.          */
+#include <vmm.h> /* Page size and flags macros. */
 
 /*
  * @brief Initialize paging.
@@ -59,7 +43,7 @@ void arch_paging_map(
         paddr_t space,
         vaddr_t vaddr,
         paddr_t paddr,
-        mmu_flags_t flags);
+        vmm_prot_t flags);
 
 /*
  * @brief Unmap a virtual page from its associated physical page frame inside a
@@ -85,7 +69,7 @@ void arch_paging_map_range(
         vaddr_t vaddr,
         paddr_t paddr,
         size_t num_pages,
-        mmu_flags_t flags);
+        vmm_prot_t flags);
 
 /*
  * @brief Load an address space.
@@ -108,7 +92,7 @@ paddr_t arch_paging_space_get(void);
  *
  * @return The flags of the page.
  */
-mmu_flags_t arch_paging_get_flags(paddr_t space, vaddr_t vaddr);
+vmm_prot_t arch_paging_get_flags(paddr_t space, vaddr_t vaddr);
 
 /*
  * @brief Set the flags of a certain page.
@@ -116,7 +100,7 @@ mmu_flags_t arch_paging_get_flags(paddr_t space, vaddr_t vaddr);
  * @param vaddr The virtual address of the page.
  * @param flags The flags to be set.
  */
-void arch_paging_set_flags(paddr_t space, vaddr_t vaddr, mmu_flags_t flags);
+void arch_paging_set_flags(paddr_t space, vaddr_t vaddr, vmm_prot_t flags);
 
 /*
  * @brief Flush an entry in the TLB.

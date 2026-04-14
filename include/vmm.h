@@ -15,7 +15,7 @@
 #define PAGE_ALIGN_DOWN(addr) ((addr) & ~(PAGE_SIZE - 1))
 
 /* Kernel-specific page flags. */
-typedef uint32_t mmu_flags_t;
+typedef uint32_t vmm_prot_t;
 
 #define PAGE_READ    (1 << 0) /* Read.           */
 #define PAGE_WRITE   (1 << 1) /* Write.          */
@@ -54,7 +54,7 @@ typedef struct vmm_region {
     vmm_space_t             *space;  /* Space this region belongs to.   */
     vmm_object_t            *object; /* Object of this region.          */
     size_t                  offset;  /* Offset into the object.         */
-    mmu_flags_t             prot;    /* Memory protection flags.        */
+    vmm_prot_t              prot;    /* Memory protection flags.        */
     struct vmm_region_ops_t *ops;    /* Operations of the region.       */
     list_node_t             node;    /* Node on the regions list.       */
 } vmm_region_t;
@@ -144,7 +144,7 @@ void vmm_space_switch(vmm_space_t *space);
 vmm_region_t *vmm_region_create(
         vaddr_t addr,
         size_t size,
-        mmu_flags_t prot);
+        vmm_prot_t prot);
 
 /*
  * @brief Delete a memory region.

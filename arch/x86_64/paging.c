@@ -110,9 +110,9 @@ static pte_t *pgtable_get_pte(paddr_t space, vaddr_t vaddr)
     return &pt[PT_INDEX(vaddr)];
 }
 
-static mmu_flags_t flags_pte_to_kernel(uint64_t flags)
+static vmm_prot_t flags_pte_to_kernel(uint64_t flags)
 {
-    mmu_flags_t kernel_flags = 0;
+    vmm_prot_t kernel_flags = 0;
 
     if (flags & PTE_PRESENT) kernel_flags |= PAGE_PRESENT;
     if (flags & PTE_WRITE)   kernel_flags |= PAGE_WRITE;
@@ -124,7 +124,7 @@ static mmu_flags_t flags_pte_to_kernel(uint64_t flags)
     return kernel_flags;
 }
 
-static uint64_t flags_kernel_to_pte(mmu_flags_t flags)
+static uint64_t flags_kernel_to_pte(vmm_prot_t flags)
 {
     uint64_t pte_flags = 0;
 
@@ -229,7 +229,7 @@ void arch_paging_map(
         paddr_t space,
         vaddr_t vaddr,
         paddr_t paddr,
-        mmu_flags_t flags)
+        vmm_prot_t flags)
 {
     pte_t *pte = pgtable_get_pte(space, vaddr);
     *pte = PTE_ADDR(paddr) | flags_kernel_to_pte(flags);
@@ -247,7 +247,7 @@ void arch_paging_map_range(
         vaddr_t vaddr,
         paddr_t paddr,
         size_t num_pages,
-        mmu_flags_t flags)
+        vmm_prot_t flags)
 {
     size_t offset = 0;
     while (num_pages--) {
@@ -256,14 +256,14 @@ void arch_paging_map_range(
     }
 }
 
-mmu_flags_t arch_paging_get_flags(paddr_t space, vaddr_t vaddr)
+vmm_prot_t arch_paging_get_flags(paddr_t space, vaddr_t vaddr)
 {
     pte_t *pte = pgtable_get_pte(space, vaddr);
 
     return flags_pte_to_kernel((*pte) & (PTE_NX | 0xfffUL));
 }
 
-void arch_paging_set_flags(paddr_t space, vaddr_t vaddr, mmu_flags_t flags)
+void arch_paging_set_flags(paddr_t space, vaddr_t vaddr, vmm_prot_t flags)
 {
     pte_t *pte = pgtable_get_pte(space, vaddr);
     *pte = ((*pte) & ~(PTE_NX | 0xfffUL)) | flags_kernel_to_pte(flags);

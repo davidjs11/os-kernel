@@ -37,8 +37,8 @@ static size_t mem_size;
 static uint64_t hhdm_offset;
 static paddr_t kernel_paddr;
 static vaddr_t kernel_vaddr;
-extern char kernel_image_start[];
-extern char kernel_image_end[];
+extern char _kernel_image_start[];
+extern char _kernel_image_end[];
 bool limine_parsed = false;
 
 /*
@@ -178,5 +178,5 @@ uint64_t platform_mem_get_kernel_image_paddr(void)
 
 size_t platform_mem_get_kernel_image_size(void)
 {
-    return (size_t)((vaddr_t) kernel_image_end - (vaddr_t) kernel_image_start);
+    return (size_t)((vaddr_t) _kernel_image_end - (vaddr_t) _kernel_image_start);
 }

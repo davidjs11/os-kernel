@@ -4,7 +4,7 @@
 
 OUTPUT_FORMAT(elf64-x86-64)
 
-ENTRY(kmain)
+ENTRY(kernel_entry_point)
 
 PHDRS
 {
@@ -17,7 +17,7 @@ PHDRS
 SECTIONS
 {
     . = 0xffffffff80000000;
-    kernel_image_start = .;
+    _kernel_image_start = .;
 
     /* --- limine_requests --- */
     .limine_requests : {
@@ -54,6 +54,10 @@ SECTIONS
     .bss : {
         *(.bss .bss.*)
         *(COMMON)
+        . = ALIGN(16);
+        _stack_bottom = .;
+        . += 16 * 1024; /* 16 KiB. */
+        _stack_top = .;
     } :data
 
     /DISCARD/ : {
@@ -61,5 +65,5 @@ SECTIONS
         *(.note .note.*)
     }
 
-    kernel_image_end = .;
+    _kernel_image_end = .;
 }

@@ -13,7 +13,9 @@ void pmm_init(pmm_ops_t *ops)
     mmap_entry_t *mmap = platform_mem_get_mmap();
 
     /* Initialize PMM algorithm. */
-    pmm_ops = ops;
+    if (ops != NULL) {
+        pmm_ops = ops;
+    }
     pmm_ops->init(platform_mem_get_hhdm_vaddr());
 
     /* Build free frame list. */

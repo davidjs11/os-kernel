@@ -7,6 +7,7 @@
 #include <kheap.h>
 #include <arch/paging.h>
 #include <platform/mem.h>
+#include "vm_layout.h"
 
 #define KERNEL_REGION_HHDM          0
 #define KERNEL_REGION_KERNEL_CODE   1
@@ -44,7 +45,7 @@ static int vmm_page_fault_anon(
     return 0;
 }
 
-static void vmm_map_region(vmm_region_t *region) {
+static void vmm_region_map(vmm_region_t *region) {
     size_t page_count = PAGE_ALIGN(region->object->size) / PAGE_SIZE;
     for (size_t i = 0; i < page_count; i++) {
         region->object->ops->fault(
@@ -105,7 +106,7 @@ static void vmm_kernel_space_init(void)
         (platform_mem_get_kernel_image_vaddr() - heap_addr);
 
     kernel_regions[KERNEL_REGION_KERNEL_HEAP] = (vmm_region_t) {
-        .addr   = heap_addr,
+        .addr   = KERNEL_LAYOUT_HEAP_BASE,
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_KERNEL_HEAP],
         .offset = 0,
@@ -120,7 +121,7 @@ static void vmm_kernel_space_init(void)
 
     kernel_objects[KERNEL_REGION_KERNEL_HEAP] = (vmm_object_t) {
         .refcount  = 1,
-        .size      = heap_size,
+        .size      = KERNEL_LAYOUT_HEAP_SIZE,
         .ops       = &object_ops_anon,
     };
 
@@ -154,11 +155,17 @@ void vmm_init(void)
     vmm_kernel_space_init();
 
     /* Map HHDM and kernel image regions. */
-    vmm_map_region(&kernel_regions[KERNEL_REGION_HHDM]);
-    vmm_map_region(&kernel_regions[KERNEL_REGION_KERNEL_CODE]);
+    vmm_region_map(&kernel_regions[KERNEL_REGION_HHDM]);
+    vmm_region_map(&kernel_regions[KERNEL_REGION_KERNEL_CODE]);
 
     /* Switch to new address space. */
     arch_paging_space_load(kernel_space.pt_phys);
+
+    kheap_init(
+        kernel_regions[KERNEL_REGION_KERNEL_HEAP].addr,
+        kernel_regions[KERNEL_REGION_KERNEL_HEAP].object->size,
+        NULL
+    );
 }
 
 /*
@@ -174,8 +181,7 @@ void vmm_region_init(
     size_t size,
     vmm_prot_t prot)
 {
-    region->addr = addr;
-    // region->
+    /* TODO: Implement this. */
 }
 
 vmm_region_t *vmm_region_create(vaddr_t addr, size_t size, vmm_prot_t prot);

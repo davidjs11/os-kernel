@@ -79,17 +79,17 @@ static inline void list_insert(
 }
 
 /*
- * @brief Add a new node right before another.
+ * @brief Add a new node at the start of the list.
  */
-static inline void list_preappend(list_node_t *head, list_node_t *node)
+static inline void list_push_front(list_node_t *head, list_node_t *node)
 {
     list_insert(node, head, head->next);
 }
 
 /*
- * @brief Add a new node right after another.
+ * @brief Add a new node at the end of the list.
  */
-static inline void list_append(list_node_t *head, list_node_t *node)
+static inline void list_push_back(list_node_t *head, list_node_t *node)
 {
     list_insert(node, head->prev, head);
 }

@@ -96,12 +96,12 @@ static vmm_prot_t flags_pte_to_kernel(uint64_t flags)
 {
     vmm_prot_t kernel_flags = 0;
 
-    if (flags & PTE_PRESENT) kernel_flags |= PAGE_PRESENT;
-    if (flags & PTE_WRITE)   kernel_flags |= PAGE_WRITE;
-    if (flags & PTE_USER)    kernel_flags |= PAGE_USER;
-    if (flags & PTE_DIRTY)   kernel_flags |= PAGE_DIRTY;
-    if (flags & PTE_HUGE)    kernel_flags |= PAGE_HUGE;
-    if (!(flags & PTE_NX))   kernel_flags |= PAGE_EXEC;
+    if (flags & PTE_PRESENT) kernel_flags |= PROT_PRESENT;
+    if (flags & PTE_WRITE)   kernel_flags |= PROT_WRITE;
+    if (flags & PTE_USER)    kernel_flags |= PROT_USER;
+    if (flags & PTE_DIRTY)   kernel_flags |= PROT_DIRTY;
+    if (flags & PTE_HUGE)    kernel_flags |= PROT_HUGE;
+    if (!(flags & PTE_NX))   kernel_flags |= PROT_EXEC;
 
     return kernel_flags;
 }
@@ -110,12 +110,12 @@ static uint64_t flags_kernel_to_pte(vmm_prot_t flags)
 {
     uint64_t pte_flags = 0;
 
-    if (flags & PAGE_PRESENT) pte_flags |= PTE_PRESENT;
-    if (flags & PAGE_WRITE)   pte_flags |= PTE_WRITE;
-    if (flags & PAGE_USER)    pte_flags |= PTE_USER;
-    if (flags & PAGE_DIRTY)   pte_flags |= PTE_DIRTY;
-    if (flags & PAGE_HUGE)    pte_flags |= PTE_HUGE;
-    if (!(flags & PAGE_EXEC)) pte_flags |= PTE_NX;
+    if (flags & PROT_PRESENT) pte_flags |= PTE_PRESENT;
+    if (flags & PROT_WRITE)   pte_flags |= PTE_WRITE;
+    if (flags & PROT_USER)    pte_flags |= PTE_USER;
+    if (flags & PROT_DIRTY)   pte_flags |= PTE_DIRTY;
+    if (flags & PROT_HUGE)    pte_flags |= PTE_HUGE;
+    if (!(flags & PROT_EXEC)) pte_flags |= PTE_NX;
 
     return pte_flags;
 }
@@ -142,7 +142,7 @@ void arch_paging_init()
                 mmap->base + hhdm_offset,
                 mmap->base,
                 PAGE_ALIGN(mmap->size) / PAGE_SIZE,
-                PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
+                PROT_PRESENT | PROT_WRITE | PROT_EXEC
             );
         }
         mmap++;
@@ -155,7 +155,7 @@ void arch_paging_init()
         kernel_vaddr,
         kernel_paddr,
         PAGE_ALIGN(kernel_size) / PAGE_SIZE,
-        PAGE_PRESENT | PAGE_WRITE | PAGE_EXEC
+        PROT_PRESENT | PROT_WRITE | PROT_EXEC
     );
 
     arch_paging_space_load(kernel_space);

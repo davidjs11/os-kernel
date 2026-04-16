@@ -17,13 +17,13 @@
 /* Kernel-specific page flags. */
 typedef uint32_t vmm_prot_t;
 
-#define PAGE_READ    (1 << 0) /* Read.           */
-#define PAGE_WRITE   (1 << 1) /* Write.          */
-#define PAGE_EXEC    (1 << 2) /* Execute.        */
-#define PAGE_USER    (1 << 3) /* User-space.     */
-#define PAGE_HUGE    (1 << 4) /* Huge page size. */
-#define PAGE_PRESENT (1 << 5) /* Present.        */
-#define PAGE_DIRTY   (1 << 6) /* Dirty.          */
+#define PROT_READ    (1 << 0) /* Read.           */
+#define PROT_WRITE   (1 << 1) /* Write.          */
+#define PROT_EXEC    (1 << 2) /* Execute.        */
+#define PROT_USER    (1 << 3) /* User-space.     */
+#define PROT_HUGE    (1 << 4) /* Huge page size. */
+#define PROT_PRESENT (1 << 5) /* Present.        */
+#define PROT_DIRTY   (1 << 6) /* Dirty.          */
 
 /* Virtual memory address space. */
 typedef struct vmm_space {
@@ -33,9 +33,9 @@ typedef struct vmm_space {
 
 /* Virtual memory object. */
 typedef struct vmm_object {
-    int                     refcount; /* Number of processes with the object. */
-    size_t                  size;     /* Size in bytes of the memory object.  */
-    struct vmm_object_ops_t *ops;     /* Operations of the object.            */
+    int                   refcount; /* Number of processes with the object. */
+    size_t                size;     /* Size in bytes of the memory object.  */
+    struct vmm_object_ops *ops;     /* Operations of the object.            */
     union {
         /* Physical memory. */
         struct { paddr_t base; } phys;
@@ -55,7 +55,6 @@ typedef struct vmm_region {
     vmm_object_t            *object; /* Object of this region.          */
     size_t                  offset;  /* Offset into the object.         */
     vmm_prot_t              prot;    /* Memory protection flags.        */
-    struct vmm_region_ops_t *ops;    /* Operations of the region.       */
     list_node_t             node;    /* Node on the regions list.       */
 } vmm_region_t;
 
@@ -77,7 +76,7 @@ typedef struct vmm_object_ops {
             vmm_space_t *space,
             vaddr_t addr,
             size_t offset,
-            int flags);
+            vmm_prot_t flags);
 
     /*
      * @brief Handle a refcount = 0 of the memory object.
@@ -93,11 +92,19 @@ typedef struct vmm_object_ops {
 void vmm_init(void);
 
 /*
- * @brief Create a new address space.
+ * @brief Create a new dynamically-allocated address space struct. Programmer
+ *        is responsible of freeing it using vmm_space_delete().
  *
- * @return The new address space.
+ * @return The new initialized address space.
  */
 vmm_space_t *vmm_space_create(void);
+
+/*
+ * @brief Delete a dynamically-allocated address space struct.
+ *
+ * @param space The address space to be deleted.
+ */
+void vmm_space_delete(vmm_space_t *space);
 
 /*
  * @brief Add a memory region to an address space.
@@ -112,13 +119,6 @@ vmm_space_t *vmm_space_create(void);
  * @return -1 if the operation fails.
  */
 void vmm_space_add_region(vmm_space_t *space, vmm_region_t *region);
-
-/*
- * @brief Delete an address space.
- *
- * @param space The address space to be deleted.
- */
-void vmm_space_delete(vmm_space_t *space);
 
 /*
  * @brief Switch current address space.
@@ -141,10 +141,7 @@ void vmm_space_switch(vmm_space_t *space);
  *
  * @return A pointer to the new created region.
  */
-vmm_region_t *vmm_region_create(
-        vaddr_t addr,
-        size_t size,
-        vmm_prot_t prot);
+vmm_region_t *vmm_region_create(vaddr_t addr, size_t size, vmm_prot_t prot);
 
 /*
  * @brief Delete a memory region.
@@ -190,6 +187,14 @@ vmm_object_t *vmm_object_create_phys(paddr_t base, size_t size);
  * @return A pointer to the anonymous memory object.
  */
 vmm_object_t *vmm_object_create_anon(size_t size);
+
+/*
+ * @brief Delete a memory object.
+ *
+ * @param obj A pointer to the object to be deleted.
+ */
+void vmm_object_delete(vmm_object_t *obj);
+
 
 /*
  * @brief Delete a memory object.

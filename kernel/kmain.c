@@ -5,6 +5,7 @@
 #include <arch.h>
 #include <arch/paging.h>
 #include <pmm.h>
+#include <vmm.h>
 #include <list.h>
 
 /*
@@ -14,7 +15,7 @@ void kmain(void)
 {
     arch_init();
     pmm_init(PMM_ALGORITHM_FREELIST);
-    arch_paging_init();
+    vmm_init();
 
     for (;;);
     return;

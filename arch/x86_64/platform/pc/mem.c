@@ -79,6 +79,7 @@ static void parse_limine_requests()
 
     size_t i = 0;
     mmap_entry_count = limine_mmap->entry_count;
+    mem_size = 0;
     for (; i < mmap_entry_count && i < MMAP_ENTRIES_MAX - 1; i++) {
         /* Copy entry from Limine memory to kernel memory. */
         mmap_entry[i] = (mmap_entry_t) {
@@ -88,8 +89,15 @@ static void parse_limine_requests()
         };
 
         /* Keep track of the highest entry for obtaining memory size. */
-        paddr_t end = mmap_entry[i].base + mmap_entry[i].size;
-        if (end > mem_size) mem_size = end;
+        switch (mmap_entry[i].type) {
+            case LIMINE_MEMMAP_USABLE:
+            case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
+            case LIMINE_MEMMAP_EXECUTABLE_AND_MODULES:
+                paddr_t end = mmap_entry[i].base + mmap_entry[i].size;
+                if (end > mem_size) {
+                    mem_size = end;
+                }
+        }
     }
 
     /* Null sentinel entry that marks end of the map. */

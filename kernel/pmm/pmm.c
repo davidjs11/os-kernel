@@ -5,22 +5,16 @@
 #include <platform/mem.h>
 #include <arch/paging.h>
 #include <pmm.h>
-#include "freelist.h"
 
-pmm_algorithm_t pmm_algorithm = _PMM_ALGORITHM_FREELIST;
+static pmm_ops_t *pmm_ops = PMM_OPS_DEFAULT;
 
-void pmm_init(pmm_algorithm_name_t pmm_algorithm_name)
+void pmm_init(pmm_ops_t *ops)
 {
     mmap_entry_t *mmap = platform_mem_get_mmap();
 
     /* Initialize PMM algorithm. */
-    switch (pmm_algorithm_name) {
-        case PMM_ALGORITHM_FREELIST:
-        default:
-            pmm_algorithm = _PMM_ALGORITHM_FREELIST;
-            break;
-    }
-    pmm_algorithm.init(platform_mem_get_hhdm_vaddr());
+    pmm_ops = ops;
+    pmm_ops->init(platform_mem_get_hhdm_vaddr());
 
     /* Build free frame list. */
     for (size_t i = 0; mmap[i].base != 0 && mmap[i].size != 0; i++) {
@@ -29,17 +23,17 @@ void pmm_init(pmm_algorithm_name_t pmm_algorithm_name)
             continue;
         }
 
-        uintptr_t start = mmap[i].base;
-        uintptr_t end = start + mmap[i].size;
-        for (uintptr_t page = start; page < end; page += PAGE_SIZE) {
-            pmm_algorithm.free(page);
+        paddr_t start = mmap[i].base;
+        paddr_t end = start + mmap[i].size;
+        for (paddr_t page = start; page < end; page += PAGE_SIZE) {
+            pmm_ops->free(page);
         }
     }
 }
 
-uintptr_t pmm_alloc(void)
+paddr_t pmm_alloc(void)
 {
-    uintptr_t page = pmm_algorithm.alloc();
+    paddr_t page = pmm_ops->alloc();
     if (page == 0) {
         /* TODO: panic. */
     }
@@ -47,12 +41,12 @@ uintptr_t pmm_alloc(void)
     return page;
 }
 
-void pmm_free(uintptr_t addr)
+void pmm_free(paddr_t addr)
 {
-    pmm_algorithm.free(addr);
+    pmm_ops->free(addr);
 }
 
 size_t pmm_available(void)
 {
-    return pmm_algorithm.available();
+    return pmm_ops->available();
 }

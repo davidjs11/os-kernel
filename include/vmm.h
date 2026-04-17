@@ -64,30 +64,35 @@ typedef struct vmm_region {
 /* Operations performed for each memory region. */
 typedef struct vmm_object_ops {
     /*
-     * @brief Handle a page fault (map the object into memory).
+     * @brief Map the object into memory given a certain address inside virtual
+     *        memory space.
      *
-     * @param obj    Object for which the mapping will be done.
-     * @param space  Space in which to handle the page fault.
-     * @param addr   Address that the object will be mapped to.
-     * @param offset Offset inside the object.
+     * @param space  Space in which to apply the mapping.
+     * @param region Region of the address to be mapped.
+     * @param addr   Address to be mapped.
      * @param flags  Flags of the fault.
      *
      * @return Result of the operation (0 on succeed).
      */
-    int (*fault)(
-            vmm_object_t *obj,
-            vmm_space_t *space,
-            vaddr_t addr,
-            size_t offset,
-            vmm_prot_t flags);
+    int (*map)(
+        vmm_region_t *region,
+        vmm_space_t *space,
+        vaddr_t addr,
+        vmm_prot_t flags);
 
     /*
      * @brief Handle a refcount = 0 of the memory object.
      *
-     * @param obj Object for which the mapping will be done.
+     * @param space  Space in which to apply the unmapping.
+     * @param region Region to be unmapped.
      */
-    void (*release)(vmm_object_t *obj);
+    void (*unmap)(
+        vmm_region_t *region,
+        vmm_space_t *space);
 } vmm_object_ops_t;
+
+extern vmm_object_ops_t object_ops_anon;
+extern vmm_object_ops_t object_ops_phys;
 
 /*
  * @brief Handle a page fault.

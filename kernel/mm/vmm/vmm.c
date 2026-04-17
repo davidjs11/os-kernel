@@ -15,51 +15,12 @@
 #define VMM_STATIC_OBJECTS_MAX      3
 #define VMM_STATIC_REGIONS_MAX      3
 
-static int vmm_page_fault_phys(
-            vmm_object_t *obj,
-            vmm_space_t *space,
-            vaddr_t addr,
-            size_t offset,
-            vmm_prot_t flags)
-{
-    arch_paging_map(
-        space->pt_phys,
-        addr + offset,
-        obj->phys.base + offset,
-        flags | PROT_PRESENT
-    );
-
-    return 0;
-}
-
-static int vmm_page_fault_anon(
-            vmm_object_t *obj,
-            vmm_space_t *space,
-            vaddr_t addr,
-            size_t offset,
-            vmm_prot_t flags)
-{
-    paddr_t new_page = pmm_alloc();
-    arch_paging_map(
-        space->pt_phys,
-        addr + offset,
-        new_page,
-        flags | PROT_PRESENT);
-
-    return 0;
-}
-
-static void vmm_region_map(vmm_region_t *region) {
+static void vmm_region_map(vmm_space_t *space, vmm_region_t *region) {
     size_t page_count = PAGE_ALIGN(region->object->size) / PAGE_SIZE;
-    size_t i;
-    for (i = 0; i < page_count; i++) {
-        region->object->ops->fault(
-            region->object,
-            region->space,
-            region->addr,
-            PAGE_SIZE * i,
-            region->prot
-        );
+    for (size_t page_addr = region->addr;
+        page_addr < region->addr + region->object->size;
+        page_addr += PAGE_SIZE) {
+            region->object->ops->map(region, space, page_addr, region->prot);
     }
 }
 
@@ -67,16 +28,6 @@ static vmm_space_t  kernel_space;
 static vmm_object_t kernel_objects[VMM_STATIC_OBJECTS_MAX];
 static vmm_region_t kernel_regions[VMM_STATIC_REGIONS_MAX];
 static vmm_space_t *current_space = NULL;
-
-static vmm_object_ops_t object_ops_phys = {
-    .fault = vmm_page_fault_phys,
-    .release = NULL
-};
-
-static vmm_object_ops_t object_ops_anon = {
-    .fault = vmm_page_fault_anon,
-    .release = NULL
-};
 
 static void vmm_kernel_space_init(void)
 {
@@ -156,8 +107,8 @@ void vmm_init(void)
     vmm_kernel_space_init();
 
     /* Map HHDM and kernel image regions. */
-    vmm_region_map(&kernel_regions[KERNEL_REGION_HHDM]);
-    vmm_region_map(&kernel_regions[KERNEL_REGION_KERNEL_CODE]);
+    vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_HHDM]);
+    vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_KERNEL_CODE]);
 
     /* Switch to new address space. */
     vmm_space_switch(&kernel_space);
@@ -211,33 +162,10 @@ void vmm_handle_page_fault(
 
     /* TODO: Compare permissions against region. */
 
-    size_t offset = addr - region->addr;
-
-    region->object->ops->fault(
-        region->object,
-        region->space,
+    region->object->ops->map(
+        region,
+        current_space,
         PAGE_ALIGN_DOWN(addr),
-        offset,
         region->prot
     );
 }
-
-/*
- * @brief Initialize a memory region.
- *
- * @param addr Starting address of the region.
- * @param size Size of the region in bytes.
- * @param prot Memory protection flags (R/W/X).
- */
-void vmm_region_init(
-    vmm_region_t *region,
-    vaddr_t addr,
-    size_t size,
-    vmm_prot_t prot)
-{
-    /* TODO: Implement this. */
-}
-
-vmm_region_t *vmm_region_create(vaddr_t addr, size_t size, vmm_prot_t prot);
-void vmm_region_delete(vmm_region_t *region);
-void vmm_region_destroy(vmm_region_t *region);

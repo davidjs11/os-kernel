@@ -29,6 +29,17 @@ typedef uint64_t pte_t;
 #define PTE_GLOBAL   (1ULL << 8)  /* Not flushed on CR3 reload.       */
 #define PTE_NX       (1ULL << 63) /* No execute. Requires EFER.NXE=1. */
 
+/* Page Fault error code flags (SDM Vol. 3A Fig. 7-11). */
+#define PF_ERROR_PRESENT      (1ULL << 0)  /* Page is present.                */
+#define PF_ERROR_WRITE        (1ULL << 1)  /* Page was tried to be writen.    */
+#define PF_ERROR_USER         (1ULL << 2)  /* Page was accessed on user-mode. */
+#define PF_ERROR_RESERVED     (1ULL << 3)  /* Reserved bit was set in a page. */
+#define PF_ERROR_FETCH        (1ULL << 4)  /* A fetch occured on the page.    */
+#define PF_ERROR_PROT_KEY     (1ULL << 5)  /* Page protection key violation.  */
+#define PF_ERROR_SHADOW_STACK (1ULL << 6)  /* Shadow-stack access performed.  */
+#define PF_ERROR_HUGE         (1ULL << 7)  /* HLAT paging.                    */
+#define PF_ERROR_GLOBAL       (1ULL << 15) /* SGX access-control violated.    */
+
 /*
  * @brief Extract the physical address of a page entry
  *

@@ -58,6 +58,9 @@ typedef struct vmm_region {
     list_node_t             node;    /* Node on the regions list.       */
 } vmm_region_t;
 
+#define VMM_REGION_LIST_NODE(ptr) \
+    ((vmm_region_t *) ((char *) (ptr) - offsetof(vmm_region_t, node)))
+
 /* Operations performed for each memory region. */
 typedef struct vmm_object_ops {
     /*
@@ -85,6 +88,21 @@ typedef struct vmm_object_ops {
      */
     void (*release)(vmm_object_t *obj);
 } vmm_object_ops_t;
+
+/*
+ * @brief Handle a page fault.
+ *
+ * @param present Page is present.
+ * @param write   Page was tried to be written.
+ * @param user   Page was accessed on user-mode.
+ * @param exec   Page was tried to be executed.
+ */
+void vmm_handle_page_fault(
+    vaddr_t addr,
+    bool present,
+    bool write,
+    bool user,
+    bool exec);
 
 /*
  * @brief Initialize paging and create kernel virtual memory address space.
@@ -159,7 +177,7 @@ void vmm_region_delete(vmm_region_t *region);
  *
  * @return A pointer to the memory region that contains the virtual address.
  */
-vmm_region_t *vmm_region_find(vmm_space_t *space, vaddr_t addr);
+vmm_region_t *vmm_space_find_region(vmm_space_t *space, vaddr_t addr);
 
 /*
  * @brief Set the backing object of a region.

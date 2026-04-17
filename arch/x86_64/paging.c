@@ -7,16 +7,34 @@
 #include <libc/string.h>
 #include <pmm.h>
 #include "pgtable.h"
+#include "idt.h"
 
 /* Virtual address of the Higher Half Direct Mapping (HHDM) offset. */
 static uint64_t hhdm_offset = 0;
+
+/*
+ * @brief Obtain the contents of the CR2 register.
+ *
+ * @return Value of the CR2 register (virtual address that caused a page fault).
+ */
+static inline paddr_t cr2_read(void)
+{
+    uint64_t cr2;
+    __asm__ volatile (
+        "movq %%cr2, %0"
+        : "=r" (cr2)
+        :
+        : "memory"
+    );
+    return cr2;
+}
 
 /*
  * @brief Obtain the contents of the CR3 register.
  *
  * @return Value of the CR3 register (physical address of active PML4).
  */
-static inline paddr_t cr3_read()
+static inline paddr_t cr3_read(void)
 {
     uint64_t cr3;
     __asm__ volatile (
@@ -120,45 +138,22 @@ static uint64_t flags_kernel_to_pte(vmm_prot_t flags)
     return pte_flags;
 }
 
+void pf_handler(interrupt_frame_t *frame)
+{
+    uint64_t err = frame->error_code;
+
+    vmm_handle_page_fault(
+        cr2_read(),
+        err & PF_ERROR_PRESENT,
+        err & PF_ERROR_WRITE,
+        err & PF_ERROR_USER,
+        err & PF_ERROR_FETCH
+    );
+}
+
 void arch_paging_init()
 {
-    hhdm_offset          = platform_mem_get_hhdm_vaddr();
-    vaddr_t kernel_vaddr = platform_mem_get_kernel_image_vaddr();
-    paddr_t kernel_paddr = platform_mem_get_kernel_image_paddr();
-    size_t kernel_size   = platform_mem_get_kernel_image_size();
-    paddr_t kernel_space = arch_paging_space_create();
-
-    /* Map all physical memory to HHDM area. */
-    mmap_entry_t *mmap = platform_mem_get_mmap();
-    size_t mmap_count = platform_mem_get_mmap_count();
-    for (size_t i = 0; i < mmap_count; i++) {
-        if (mmap->type == MMAP_USABLE ||
-            mmap->type == MMAP_BOOTLOADER_RECLAIMABLE ||
-            mmap->type == MMAP_KERNEL_AND_MODULES ||
-            mmap->type == MMAP_ACPI_RECLAIMABLE ||
-            mmap->type == MMAP_FRAMEBUFFER) {
-            arch_paging_map_range(
-                kernel_space,
-                mmap->base + hhdm_offset,
-                mmap->base,
-                PAGE_ALIGN(mmap->size) / PAGE_SIZE,
-                PROT_PRESENT | PROT_WRITE | PROT_EXEC
-            );
-        }
-        mmap++;
-    }
-
-    /* Map kernel executable to kernel virtual memory region. */
-    /* TODO: map .text, .data etc regions and set correspondent permissions. */
-    arch_paging_map_range(
-        kernel_space,
-        kernel_vaddr,
-        kernel_paddr,
-        PAGE_ALIGN(kernel_size) / PAGE_SIZE,
-        PROT_PRESENT | PROT_WRITE | PROT_EXEC
-    );
-
-    arch_paging_space_load(kernel_space);
+    hhdm_offset = platform_mem_get_hhdm_vaddr();
 }
 
 paddr_t arch_paging_space_create(void)

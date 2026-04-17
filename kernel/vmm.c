@@ -26,7 +26,7 @@ static int vmm_page_fault_phys(
         space->pt_phys,
         addr + offset,
         obj->phys.base + offset,
-        flags
+        flags | PROT_PRESENT
     );
 
     return 0;
@@ -40,14 +40,19 @@ static int vmm_page_fault_anon(
             vmm_prot_t flags)
 {
     paddr_t new_page = pmm_alloc();
-    arch_paging_map(space->pt_phys, addr + offset, new_page, flags);
+    arch_paging_map(
+        space->pt_phys,
+        addr + offset,
+        new_page,
+        flags | PROT_PRESENT);
 
     return 0;
 }
 
 static void vmm_region_map(vmm_region_t *region) {
     size_t page_count = PAGE_ALIGN(region->object->size) / PAGE_SIZE;
-    for (size_t i = 0; i < page_count; i++) {
+    size_t i;
+    for (i = 0; i < page_count; i++) {
         region->object->ops->fault(
             region->object,
             region->space,
@@ -61,6 +66,7 @@ static void vmm_region_map(vmm_region_t *region) {
 static vmm_space_t  kernel_space;
 static vmm_object_t kernel_objects[VMM_STATIC_OBJECTS_MAX];
 static vmm_region_t kernel_regions[VMM_STATIC_REGIONS_MAX];
+static vmm_space_t *current_space = NULL;
 
 static vmm_object_ops_t object_ops_phys = {
     .fault = vmm_page_fault_phys,
@@ -83,7 +89,7 @@ static void vmm_kernel_space_init(void)
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_HHDM],
         .offset = 0,
-        .prot   = PROT_READ | PROT_WRITE,
+        .prot   = PROT_READ | PROT_WRITE | PROT_PRESENT,
     };
 
     list_init(&kernel_regions[KERNEL_REGION_HHDM].node);
@@ -99,18 +105,13 @@ static void vmm_kernel_space_init(void)
         .phys.base = 0x0,
     };
     
-    /* Kernel heap (between HHDM and kernel image). */
-    vaddr_t heap_addr =
-        platform_mem_get_hhdm_vaddr() + platform_mem_get_size();
-    size_t heap_size = (size_t)
-        (platform_mem_get_kernel_image_vaddr() - heap_addr);
-
+    /* Kernel heap. */
     kernel_regions[KERNEL_REGION_KERNEL_HEAP] = (vmm_region_t) {
         .addr   = KERNEL_LAYOUT_HEAP_BASE,
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_KERNEL_HEAP],
         .offset = 0,
-        .prot   = PROT_READ | PROT_WRITE | PROT_PRESENT,
+        .prot   = PROT_READ | PROT_WRITE,
     };
 
     list_init(&kernel_regions[KERNEL_REGION_KERNEL_HEAP].node);
@@ -159,12 +160,65 @@ void vmm_init(void)
     vmm_region_map(&kernel_regions[KERNEL_REGION_KERNEL_CODE]);
 
     /* Switch to new address space. */
-    arch_paging_space_load(kernel_space.pt_phys);
+    vmm_space_switch(&kernel_space);
 
     kheap_init(
         kernel_regions[KERNEL_REGION_KERNEL_HEAP].addr,
         kernel_regions[KERNEL_REGION_KERNEL_HEAP].object->size,
         NULL
+    );
+}
+
+void vmm_space_switch(vmm_space_t *space)
+{
+    if (space == NULL) {
+        return;
+    }
+
+    current_space = space;
+    arch_paging_space_load(space->pt_phys);
+}
+
+
+vmm_region_t *vmm_space_find_region(vmm_space_t *space, vaddr_t addr)
+{
+    vmm_region_t *region = NULL;
+
+    list_foreach(region_node, &space->regions) {
+        region = VMM_REGION_LIST_NODE(region_node);
+        if (addr < region->addr) {
+            return NULL; /* Regions are sorted. */
+        }
+        if (addr < region->addr + region->object->size) {
+            return region;
+        }
+    }
+
+    return NULL;
+}
+
+void vmm_handle_page_fault(
+    vaddr_t addr,
+    bool present,
+    bool write,
+    bool user,
+    bool exec)
+{
+    vmm_region_t *region = vmm_space_find_region(current_space, addr);
+    if (region == NULL) {
+        /* TODO: Segfault. */
+    }
+
+    /* TODO: Compare permissions against region. */
+
+    size_t offset = addr - region->addr;
+
+    region->object->ops->fault(
+        region->object,
+        region->space,
+        PAGE_ALIGN_DOWN(addr),
+        offset,
+        region->prot
     );
 }
 

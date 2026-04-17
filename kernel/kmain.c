@@ -4,6 +4,7 @@
 
 #include <arch.h>
 #include <arch/paging.h>
+#include <arch/interrupt.h>
 #include <pmm.h>
 #include <vmm.h>
 #include <list.h>
@@ -15,12 +16,15 @@
 void kmain(void)
 {
     arch_init();
+    arch_interrupt_init();
+    arch_interrupt_enable();
     pmm_init(NULL);
     vmm_init();
 
     int *a = kmalloc(17);
     int *b = kmalloc(10);
-    *a = 10; /* This will cause a #PF. */
+    *a = 67; /* This will cause a #PF. */
+    *b = 67; /* This will NOT cause a #PF. */
 
     for (;;);
     return;

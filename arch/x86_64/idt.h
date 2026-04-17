@@ -82,31 +82,19 @@ typedef struct interrupt_frame {
 } interrupt_frame_t;
 
 /*
- * @brief Initialize interrupts.
- */
-void interrupt_init(void);
-
-/*
- * @brief Set an specific gate in the IDT.
+ * @brief Set an interrupt gate for an specific interrupt vector in IDT.
  *
- * @param idt Interrupt Descriptor Table pointer.
+ * @param vec     Vector number of the interrupt.
+ * @param handler Handler function.
+ * @param ist     Interrupt Stack Table index.
+ * @param dpl     Descriptor Privilege Level.
+ * @param type    Type of the interrupt.
  */
 void idt_set_gate(
     uint8_t vec,
     void (*handler)(void),
     uint8_t ist,
     uint8_t dpl,
-    uint8_t type
-);
-
-static inline void interrupt_enable()
-{
-    __asm__ volatile ("sti" ::: "memory");
-}
-
-static inline void interrupt_disable()
-{
-    __asm__ volatile ("cli" ::: "memory");
-}
+    uint8_t type);
 
 #endif /* ARCH_X86_64_INTERRUPT_H */

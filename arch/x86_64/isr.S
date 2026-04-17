@@ -2,61 +2,20 @@
 
 /* Generic ISR-handler stub. */
 
-.extern generic_handler
+/* Macro for defining ISRs. */
+.macro ISR n handler error
+.global isr_handler_\n
+isr_handler_\n:
 
-/* Macro for no-error ISR. */
-.macro ISR_NOERR n
-.globl isr_stub_\n
-isr_stub_\n:
-    pushq $0  /* Dummy error code. */
-    pushq $\n /* Vector code. */
-    jmp isr_stub
-.endm
+    /* Vector code. */
+    pushq $\n 
 
-/* Macro for error ISR. */
-.macro ISR_ERR n
-.globl isr_stub_\n
-isr_stub_\n:
-    pushq $\n /* Vector code. */
-    jmp isr_stub
-.endm
+    /* Dummy error code. */
+    .ifb \error
+        pushq $0
+    .endif
 
-ISR_NOERR  0 /* Divide error. */
-ISR_NOERR  1 /* Debug exception. */
-ISR_NOERR  2 /* NMI interrupt. */
-ISR_NOERR  3 /* Breakpoint. */
-ISR_NOERR  4 /* Overflow. */
-ISR_NOERR  5 /* BOUND range exceeded. */
-ISR_NOERR  6 /* Invalid opcode (Undefined opcode). */
-ISR_NOERR  7 /* Device not available (no math coporocessor). */
-ISR_ERR    8 /* Double fault. */
-ISR_NOERR  9 /* Coprocessor segment overrun. */
-ISR_ERR   10 /* Invalid TSS. */
-ISR_ERR   11 /* Segment not present. */
-ISR_ERR   12 /* Stack-segment fault. */
-ISR_ERR   13 /* General protection. */
-ISR_ERR   14 /* Page fault. */
-ISR_NOERR 15 /* Intel-reserved. */
-ISR_NOERR 16 /* x87 FPU floating-point error. */
-ISR_ERR   17 /* Alignment check. */
-ISR_NOERR 18 /* Machine check. */
-ISR_NOERR 19 /* SIMD floating-point exception. */
-ISR_NOERR 20 /* Virtualization exception. */
-ISR_ERR   21 /* Control protection exception. */
-ISR_NOERR 22 /* Intel-reserved. */
-ISR_NOERR 23 /* Intel-reserved. */
-ISR_NOERR 24 /* Intel-reserved. */
-ISR_NOERR 25 /* Intel-reserved. */
-ISR_NOERR 26 /* Intel-reserved. */
-ISR_NOERR 27 /* Intel-reserved. */
-ISR_NOERR 28 /* Intel-reserved. */
-ISR_NOERR 29 /* Intel-reserved. */
-ISR_NOERR 30 /* Intel-reserved. */
-ISR_NOERR 31 /* Intel-reserved. */
-
-.section .text
-.globl isr_stub
-isr_stub:
+    /* Save registers. */
     pushq %rax
     pushq %rbx
     pushq %rcx
@@ -73,11 +32,12 @@ isr_stub:
     pushq %r14
     pushq %r15
 
-    /* call C handler */
+    /* Call handler. */
     cld
     mov %rsp, %rdi
-    call generic_handler
+    call \handler
 
+    /* Load registers. */
     popq %r15
     popq %r14
     popq %r13
@@ -93,5 +53,42 @@ isr_stub:
     popq %rcx
     popq %rbx
     popq %rax
+
+    /* Return. */
     addq $16, %rsp
     iretq
+.endm
+
+.section .text
+ISR  0 generic_handler       /* Divide error. */
+ISR  1 generic_handler       /* Debug exception. */
+ISR  2 generic_handler       /* NMI interrupt. */
+ISR  3 generic_handler       /* Breakpoint. */
+ISR  4 generic_handler       /* Overflow. */
+ISR  5 generic_handler       /* BOUND range exceeded. */
+ISR  6 generic_handler       /* Invalid opcode (Undefined opcode). */
+ISR  7 generic_handler       /* Device not available (no math coporocessor). */
+ISR  8 generic_handler ERROR /* Double fault. */
+ISR  9 generic_handler       /* Coprocessor segment overrun. */
+ISR 10 generic_handler ERROR /* Invalid TSS. */
+ISR 11 generic_handler ERROR /* Segment not present. */
+ISR 12 generic_handler ERROR /* Stack-segment fault. */
+ISR 13 generic_handler ERROR /* General protection. */
+ISR 14 pf_handler      ERROR /* Page fault. */
+ISR 15 generic_handler       /* Intel-reserved. */
+ISR 16 generic_handler       /* x87 FPU floating-point error. */
+ISR 17 generic_handler ERROR /* Alignment check. */
+ISR 18 generic_handler       /* Machine check. */
+ISR 19 generic_handler       /* SIMD floating-point exception. */
+ISR 20 generic_handler       /* Virtualization exception. */
+ISR 21 generic_handler ERROR /* Control protection exception. */
+ISR 22 generic_handler       /* Intel-reserved. */
+ISR 23 generic_handler       /* Intel-reserved. */
+ISR 24 generic_handler       /* Intel-reserved. */
+ISR 25 generic_handler       /* Intel-reserved. */
+ISR 26 generic_handler       /* Intel-reserved. */
+ISR 27 generic_handler       /* Intel-reserved. */
+ISR 28 generic_handler       /* Intel-reserved. */
+ISR 29 generic_handler       /* Intel-reserved. */
+ISR 30 generic_handler       /* Intel-reserved. */
+ISR 31 generic_handler       /* Intel-reserved. */

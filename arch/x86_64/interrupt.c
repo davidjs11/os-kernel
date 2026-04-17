@@ -8,6 +8,15 @@
 __attribute__((aligned(16)))
 static idt_t idt;
 
+/*
+ * @brief Set an interrupt gate for an specific interrupt vector in IDT.
+ *
+ * @param vec     Vector number of the interrupt.
+ * @param handler Handler function.
+ * @param ist     Interrupt Stack Table index.
+ * @param dpl     Descriptor Privilege Level.
+ * @param type    Type of the interrupt.
+ */
 void idt_set_gate(
     uint8_t vec,
     void (*handler)(void),

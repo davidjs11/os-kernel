@@ -1,4 +1,4 @@
-/*   kernel/vm_layout.h   */
+/*   kernel/mm/vmm/vmm_layout.h   */
 
 /* Kernel virtual memory layout private definitions. */
 

@@ -1,4 +1,4 @@
-/*   kernel/kheap.c   */
+/*   kernel/mm/kheap/kheap.c   */
 
 /* Kernel heap implementation. */
 

@@ -1,4 +1,4 @@
-/*   kernel/pmm.c   */
+/*   kernel/mm/pmm/pmm.c   */
 
 /* Kernel physical memory manager. */
 

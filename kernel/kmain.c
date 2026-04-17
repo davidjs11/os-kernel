@@ -25,6 +25,10 @@ void kmain(void)
     int *b = kmalloc(10);
     *a = 67; /* This will cause a #PF. */
     *b = 67; /* This will NOT cause a #PF. */
+    b = kmalloc(4096);
+    *b = 67; /* This will NOT cause a #PF. */
+    a = kmalloc(4);
+    *a = 67; /* This will cause a #PF. */
 
     for (;;);
     return;

@@ -1,4 +1,4 @@
-/*   kernel/pmm/freelist.c   */
+/*   kernel/mm/pmm/pmm_freelist.c   */
 
 /* Freelist physical memory manager algorithm implementation. */
 

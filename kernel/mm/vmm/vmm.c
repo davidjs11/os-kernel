@@ -1,4 +1,4 @@
-/*   kernel/vmm.c   */
+/*   kernel/mm/vmm/vmm.c   */
 
 /* Virtual memory manager implementation. */
 
@@ -7,7 +7,7 @@
 #include <kheap.h>
 #include <arch/paging.h>
 #include <platform/mem.h>
-#include "vm_layout.h"
+#include "vmm_layout.h"
 
 #define KERNEL_REGION_HHDM          0
 #define KERNEL_REGION_KERNEL_CODE   1

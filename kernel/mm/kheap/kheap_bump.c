@@ -1,4 +1,4 @@
-/*   kernel/kheap_bump.c   */
+/*   kernel/mm/kheap/kheap_bump.c   */
 
 /* Bump allocator heap implementation. */
 

@@ -3,6 +3,7 @@
 /* Kernel heap implementation. */
 
 #include <kheap.h>
+#include <libc/string.h>
 
 static kheap_ops_t *kheap_ops = KHEAP_ALLOCATOR_DEFAULT;
 
@@ -18,6 +19,32 @@ void kheap_init(vaddr_t base, size_t size, kheap_ops_t *ops)
 void *kmalloc(size_t size)
 {
     return kheap_ops->alloc(size);
+}
+
+void *krealloc(void *ptr, size_t size)
+{
+    return kheap_ops->realloc(ptr, size);
+}
+
+void *kzalloc(size_t size)
+{
+    void *ptr = kmalloc(size);
+
+    if (ptr != NULL) {
+        memset(ptr, 0, size);
+    }
+
+    return ptr;
+}
+
+void *kcalloc(size_t nmemb, size_t size)
+{
+    /* Prevent overflow. */
+    if (nmemb != 0 && size > SIZE_MAX / nmemb) {
+        return NULL;
+    }
+
+    return kzalloc(nmemb * size);
 }
 
 void kfree(void *ptr)

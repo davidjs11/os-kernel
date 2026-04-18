@@ -27,6 +27,16 @@ typedef struct kheap_ops {
     void *(*alloc)(size_t size);
 
     /*
+     * @brief Reallocate data.
+     *
+     * @param ptr  A pointer to the previously allocated data.
+     * @param size New size of the allocated data.
+     *
+     * @return A pointer to the dinamically allocated data.
+     */
+    void *(*realloc)(void *ptr, size_t size);
+
+    /*
      * @brief Free data.
      *
      * @param ptr A pointer to the data to be freed.
@@ -36,8 +46,10 @@ typedef struct kheap_ops {
 
 /* List of heap allocator algorithms. */
 extern kheap_ops_t _kheap_allocator_bump;
-#define KHEAP_ALLOCATOR_BUMP    (kheap_ops_t *) (&_kheap_allocator_bump)
-#define KHEAP_ALLOCATOR_DEFAULT KHEAP_ALLOCATOR_BUMP
+extern kheap_ops_t _kheap_allocator_freelist;
+#define KHEAP_ALLOCATOR_BUMP     (kheap_ops_t *) (&_kheap_allocator_bump)
+#define KHEAP_ALLOCATOR_FREELIST (kheap_ops_t *) (&_kheap_allocator_freelist)
+#define KHEAP_ALLOCATOR_DEFAULT  KHEAP_ALLOCATOR_FREELIST
 
 /*
  * @brief Initialize kernel heap.
@@ -60,14 +72,37 @@ void kheap_init(vaddr_t base, size_t size, kheap_ops_t *ops);
 void *kmalloc(size_t size);
 
 /*
- * @brief Same as kmalloc but zeroing the contents of the block.
+ * @brief Reallocate a previously allocated memory block in the heap.
+ *        Programmer must free this block after using it.
  *
- * @param size Size of the block in bytes.
+ * @param ptr  A pointer to the previously allocated block.
+ * @param size New size of the block in bytes.
  *
  * @return A generic pointer to the new allocated block, aligned at a 16-byte
  *         boundary.
  */
-void *kcalloc(size_t n, size_t size);
+void *krealloc(void *ptr, size_t size);
+
+/*
+ * @brief Same as kmalloc but zeroing the contents of the block.
+ *
+ * @param size  Size of the allocated block.
+ *
+ * @return A generic pointer to the new allocated block, aligned at a 16-byte
+ *         boundary.
+ */
+void *kzalloc(size_t size);
+
+/*
+ * @brief Same as kmalloc but zeroing the contents of the block.
+ *
+ * @param nmemb Number of elements in the allocated block.
+ * @param size  Size of each element in bytes.
+ *
+ * @return A generic pointer to the new allocated block, aligned at a 16-byte
+ *         boundary.
+ */
+void *kcalloc(size_t nmemb, size_t size);
 
 /*
  * @brief Free a memory block in the heap.

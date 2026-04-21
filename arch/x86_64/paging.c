@@ -249,3 +249,9 @@ void arch_paging_flush_tlb(vaddr_t vaddr)
 {
     flush_tlb(vaddr);
 }
+
+paddr_t arch_paging_get_paddr(paddr_t space, vaddr_t vaddr)
+{
+    pte_t *pte = pgtable_get_pte(space, vaddr);
+    return (*pte) & 0x000ffffffffff000ULL;
+}

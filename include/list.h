@@ -95,6 +95,22 @@ static inline void list_push_back(list_node_t *head, list_node_t *node)
 }
 
 /*
+ * @brief Insert a node right before another.
+ */
+static inline void list_insert_before(list_node_t *node, list_node_t *new_node)
+{
+    list_insert(new_node, node->prev, node);
+}
+
+/*
+ * @brief Insert a node right after another.
+ */
+static inline void list_insert_after(list_node_t *node, list_node_t *new_node)
+{
+    list_insert(new_node, node, node->next);
+}
+
+/*
  * @brief Remove a node inside a list.
  */
 static inline void list_remove(list_node_t *node)

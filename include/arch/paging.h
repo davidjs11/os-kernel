@@ -109,4 +109,13 @@ void arch_paging_set_flags(paddr_t space, vaddr_t vaddr, vmm_prot_t flags);
  */
 void arch_paging_flush_tlb(vaddr_t vaddr);
 
+/*
+ * @brief Get a physical address given a virtual address and a memory address
+ *        space.
+ *
+ * @param space Virtual address space in which to search the physical address.
+ * @param vaddr The virtual address to flush from the TLB.
+ */
+paddr_t arch_paging_get_paddr(paddr_t space, vaddr_t vaddr);
+
 #endif /* KERNEL_API_PAGING_H */

@@ -34,11 +34,10 @@ typedef struct vmm_space {
 /* Virtual memory object. */
 typedef struct vmm_object {
     int                   refcount; /* Number of processes with the object. */
-    size_t                size;     /* Size in bytes of the memory object.  */
     struct vmm_object_ops *ops;     /* Operations of the object.            */
     union {
         /* Physical memory. */
-        struct { paddr_t base; } phys;
+        struct { paddr_t base; size_t size; } phys;
 
         /* Anonymous memory. */
         struct { /* anon state */ } anon;
@@ -54,6 +53,7 @@ typedef struct vmm_region {
     vmm_space_t             *space;  /* Space this region belongs to.   */
     vmm_object_t            *object; /* Object of this region.          */
     size_t                  offset;  /* Offset into the object.         */
+    size_t                  size;    /* Size of the region.             */
     vmm_prot_t              prot;    /* Memory protection flags.        */
     list_node_t             node;    /* Node on the regions list.       */
 } vmm_region_t;
@@ -75,8 +75,8 @@ typedef struct vmm_object_ops {
      * @return Result of the operation (0 on succeed).
      */
     int (*map)(
-        vmm_region_t *region,
         vmm_space_t *space,
+        vmm_region_t *region,
         vaddr_t addr,
         vmm_prot_t flags);
 
@@ -87,12 +87,9 @@ typedef struct vmm_object_ops {
      * @param region Region to be unmapped.
      */
     void (*unmap)(
-        vmm_region_t *region,
-        vmm_space_t *space);
+        vmm_space_t *space,
+        vmm_region_t *region);
 } vmm_object_ops_t;
-
-extern vmm_object_ops_t object_ops_anon;
-extern vmm_object_ops_t object_ops_phys;
 
 /*
  * @brief Handle a page fault.
@@ -193,6 +190,14 @@ vmm_region_t *vmm_space_find_region(vmm_space_t *space, vaddr_t addr);
 void vmm_region_set_object(vmm_region_t *region, vmm_object_t *obj);
 
 /*
+ * @brief Grow a certain region.
+ *
+ * @param region   Region to grow.
+ * @param new_size New size of the region.
+ */
+void vmm_region_grow(vmm_region_t *region, size_t new_size);
+
+/*
  * @brief Create an anonymous memory object.
  *
  * @param base Physical address of the memory object base.
@@ -205,25 +210,8 @@ vmm_object_t *vmm_object_create_phys(paddr_t base, size_t size);
 /*
  * @brief Create an anonymous memory object.
  *
- * @param size Size in bytes of the memory object.
- *
  * @return A pointer to the anonymous memory object.
  */
-vmm_object_t *vmm_object_create_anon(size_t size);
-
-/*
- * @brief Delete a memory object.
- *
- * @param obj A pointer to the object to be deleted.
- */
-void vmm_object_delete(vmm_object_t *obj);
-
-
-/*
- * @brief Delete a memory object.
- * 
- * @param obj Object to delete.
- */
-void vmm_object_delete(vmm_object_t *obj);
+vmm_object_t *vmm_object_create_anon(void);
 
 #endif /* KERNEL_API_VMM_H */

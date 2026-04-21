@@ -15,19 +15,22 @@
 #define VMM_STATIC_OBJECTS_MAX      3
 #define VMM_STATIC_REGIONS_MAX      3
 
-static void vmm_region_map(vmm_space_t *space, vmm_region_t *region) {
-    size_t page_count = PAGE_ALIGN(region->object->size) / PAGE_SIZE;
-    for (size_t page_addr = region->addr;
-        page_addr < region->addr + region->object->size;
-        page_addr += PAGE_SIZE) {
-            region->object->ops->map(region, space, page_addr, region->prot);
-    }
-}
+extern vmm_object_ops_t object_ops_anon;
+extern vmm_object_ops_t object_ops_phys;
 
 static vmm_space_t  kernel_space;
 static vmm_object_t kernel_objects[VMM_STATIC_OBJECTS_MAX];
 static vmm_region_t kernel_regions[VMM_STATIC_REGIONS_MAX];
 static vmm_space_t *current_space = NULL;
+
+static void vmm_region_map(vmm_space_t *space, vmm_region_t *region) {
+    size_t page_count = PAGE_ALIGN(region->size) / PAGE_SIZE;
+    for (size_t page_addr = region->addr;
+        page_addr < region->addr + region->size;
+        page_addr += PAGE_SIZE) {
+            region->object->ops->map(space, region, page_addr, region->prot);
+    }
+}
 
 static void vmm_kernel_space_init(void)
 {
@@ -40,6 +43,7 @@ static void vmm_kernel_space_init(void)
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_HHDM],
         .offset = 0,
+        .size   = platform_mem_get_size(),
         .prot   = PROT_READ | PROT_WRITE | PROT_PRESENT,
     };
 
@@ -51,9 +55,9 @@ static void vmm_kernel_space_init(void)
 
     kernel_objects[KERNEL_REGION_HHDM] = (vmm_object_t) {
         .refcount  = 1,
-        .size      = platform_mem_get_size(),
         .ops       = &object_ops_phys,
         .phys.base = 0x0,
+        .phys.size = platform_mem_get_size(),
     };
     
     /* Kernel heap. */
@@ -62,6 +66,7 @@ static void vmm_kernel_space_init(void)
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_KERNEL_HEAP],
         .offset = 0,
+        .size   = KERNEL_LAYOUT_HEAP_SIZE,
         .prot   = PROT_READ | PROT_WRITE,
     };
 
@@ -73,7 +78,6 @@ static void vmm_kernel_space_init(void)
 
     kernel_objects[KERNEL_REGION_KERNEL_HEAP] = (vmm_object_t) {
         .refcount  = 1,
-        .size      = KERNEL_LAYOUT_HEAP_SIZE,
         .ops       = &object_ops_anon,
     };
 
@@ -84,6 +88,7 @@ static void vmm_kernel_space_init(void)
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_KERNEL_CODE],
         .offset = 0,
+        .size   = platform_mem_get_kernel_image_size(),
         .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_PRESENT,
     };
 
@@ -95,9 +100,9 @@ static void vmm_kernel_space_init(void)
 
     kernel_objects[KERNEL_REGION_KERNEL_CODE] = (vmm_object_t) {
         .refcount  = 1,
-        .size      = platform_mem_get_kernel_image_size(),
         .ops       = &object_ops_phys,
         .phys.base = platform_mem_get_kernel_image_paddr(),
+        .phys.size = platform_mem_get_kernel_image_size(),
     };
 }
 
@@ -115,7 +120,7 @@ void vmm_init(void)
 
     kheap_init(
         kernel_regions[KERNEL_REGION_KERNEL_HEAP].addr,
-        kernel_regions[KERNEL_REGION_KERNEL_HEAP].object->size,
+        kernel_regions[KERNEL_REGION_KERNEL_HEAP].size,
         NULL
     );
 }
@@ -133,14 +138,12 @@ void vmm_space_switch(vmm_space_t *space)
 
 vmm_region_t *vmm_space_find_region(vmm_space_t *space, vaddr_t addr)
 {
-    vmm_region_t *region = NULL;
-
     list_foreach(region_node, &space->regions) {
-        region = VMM_REGION_LIST_NODE(region_node);
+        vmm_region_t *region = VMM_REGION_LIST_NODE(region_node);
         if (addr < region->addr) {
             return NULL; /* Regions are sorted. */
         }
-        if (addr < region->addr + region->object->size) {
+        if (addr < region->addr + region->size) {
             return region;
         }
     }
@@ -163,8 +166,8 @@ void vmm_handle_page_fault(
     /* TODO: Compare permissions against region. */
 
     region->object->ops->map(
-        region,
         current_space,
+        region,
         PAGE_ALIGN_DOWN(addr),
         region->prot
     );

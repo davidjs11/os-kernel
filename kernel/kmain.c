@@ -21,18 +21,7 @@ void kmain(void)
     pmm_init(NULL);
     vmm_init();
 
-    int *a = kmalloc(17);
-    int *b = kmalloc(10);
-    *a = 67; /* This will cause a #PF. */
-    *b = 67; /* This will NOT cause a #PF. */
-    b = kmalloc(4096);
-    kfree(a);
-    *b = 67; /* This will NOT cause a #PF. */
-    a = kmalloc(4);
-    *a = 67; /* This will cause a #PF. */
-    a = krealloc(a, 0x3000);
-    b = kmalloc(0x200);
-
     for (;;);
     return;
 }
+

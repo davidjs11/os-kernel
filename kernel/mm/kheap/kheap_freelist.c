@@ -2,7 +2,7 @@
 
 /* Free-list with best-fit allocator implementation. */
 
-#include <kheap.h>
+#include <kernel/kheap.h>
 #include <stdint.h>
 
 #define ALIGN_UP(x, a)   (((x) + ((a) - 1)) & ~((a) - 1))

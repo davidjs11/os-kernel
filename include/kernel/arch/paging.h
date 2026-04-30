@@ -8,8 +8,8 @@
 #ifndef KERNEL_API_ARCH_PAGING_H
 #define KERNEL_API_ARCH_PAGING_H
 
-#include <types.h>
-#include <vmm.h> /* Page size and flags macros. */
+#include <kernel/types.h>
+#include <kernel/vmm.h> /* Page size and flags macros. */
 
 /*
  * @brief Initialize paging.

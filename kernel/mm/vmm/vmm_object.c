@@ -2,11 +2,11 @@
 
 /* Virtual memory object management. */
 
-#include <vmm.h>
-#include <pmm.h>
-#include <arch/paging.h>
-#include <kheap.h>
-#include <types.h>
+#include <kernel/vmm.h>
+#include <kernel/pmm.h>
+#include <kernel/arch/paging.h>
+#include <kernel/kheap.h>
+#include <kernel/types.h>
 
 static int vmm_map_phys(
     vmm_space_t *space,

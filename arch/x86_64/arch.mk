@@ -14,7 +14,8 @@ CFLAGS					+=	\
     -mno-red-zone           \
     -mno-mmx                \
     -mno-sse                \
-    -mno-sse2
+    -mno-sse2				\
+	-Iinclude/
 
 .PHONY: help
 help-x86_64:

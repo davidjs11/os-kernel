@@ -5,8 +5,8 @@
 #ifndef KERNEL_API_DYNARRAY_H
 #define KERNEL_API_DYNARRAY_H
 
-#include <kheap.h>
-#include <types.h>
+#include <kernel/kheap.h>
+#include <kernel/types.h>
 
 /* Initial capacity of a dynamic array. */
 #define DYNARRAY_INIT_CAP 4

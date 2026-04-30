@@ -2,10 +2,10 @@
 
 /* x86_64 paging mechanism, implementing kernel's public paging API. */
 
-#include <arch/paging.h>
-#include <platform/mem.h>
-#include <libc/string.h>
-#include <pmm.h>
+#include <kernel/arch/paging.h>
+#include <kernel/platform/mem.h>
+#include <kernel/libc/string.h>
+#include <kernel/pmm.h>
 #include "pgtable.h"
 #include "idt.h"
 

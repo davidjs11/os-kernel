@@ -2,7 +2,7 @@
 
 #include "segment.h"
 #include <stddef.h>
-#include <libc/string.h>
+#include <kernel/libc/string.h>
 
 /* GDT and TSS declaration. */
 __attribute__((aligned(16))) static gdt_t gdt; /* General Descriptor Table. */

@@ -3,7 +3,7 @@
 #include "idt.h"
 #include "segment.h"
 #include <stddef.h>
-#include <arch/interrupt.h>
+#include <kernel/arch/interrupt.h>
 
 __attribute__((aligned(16)))
 static idt_t idt;

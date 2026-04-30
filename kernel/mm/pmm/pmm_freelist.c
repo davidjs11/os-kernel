@@ -2,8 +2,8 @@
 
 /* Freelist physical memory manager algorithm implementation. */
 
-#include <pmm.h>
-#include <types.h>
+#include <kernel/pmm.h>
+#include <kernel/types.h>
 
 static uint64_t kernel_hhdm_offset = 0;
 static paddr_t list_top = 0;

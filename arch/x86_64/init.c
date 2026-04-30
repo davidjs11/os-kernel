@@ -2,7 +2,7 @@
 
 /* Architecture-specific initialization code implementation for x86_64. */
 
-#include <arch.h>
+#include <kernel/arch.h>
 #include <stddef.h>
 #include "segment.h"
 #include "idt.h"

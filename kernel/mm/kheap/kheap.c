@@ -2,8 +2,8 @@
 
 /* Kernel heap implementation. */
 
-#include <kheap.h>
-#include <libc/string.h>
+#include <kernel/kheap.h>
+#include <kernel/libc/string.h>
 
 static kheap_ops_t *kheap_ops = KHEAP_ALLOCATOR_DEFAULT;
 

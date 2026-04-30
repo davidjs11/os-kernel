@@ -5,7 +5,7 @@
 #ifndef KERNEL_API_PLATFORM_MEM_H
 #define KERNEL_API_PLATFORM_MEM_H
 
-#include <types.h>
+#include <kernel/types.h>
 
 /* Memory map region types. */
 typedef enum mmap_type {

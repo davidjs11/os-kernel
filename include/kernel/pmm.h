@@ -5,7 +5,7 @@
 #ifndef KERNEL_API_PMM_H
 #define KERNEL_API_PMM_H
 
-#include <types.h>
+#include <kernel/types.h>
 
 /* PMM algorithm interface. Each algorithm MUST implement these functions. */
 typedef struct pmm_ops {

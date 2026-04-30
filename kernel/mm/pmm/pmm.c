@@ -2,9 +2,9 @@
 
 /* Kernel physical memory manager. */
 
-#include <platform/mem.h>
-#include <arch/paging.h>
-#include <pmm.h>
+#include <kernel/platform/mem.h>
+#include <kernel/arch/paging.h>
+#include <kernel/pmm.h>
 
 static pmm_ops_t *pmm_ops = PMM_OPS_DEFAULT;
 

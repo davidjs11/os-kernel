@@ -5,7 +5,7 @@
 #ifndef KERNEL_API_LIST_H
 #define KERNEL_API_LIST_H
 
-#include <types.h>
+#include <kernel/types.h>
 
 /* Intrusive list node. */
 typedef struct list_node {

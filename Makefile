@@ -25,8 +25,8 @@ include config.mk
 SUBDIRS					= arch/$(ARCH)                      \
 						  arch/$(ARCH)/platform/$(PLATFORM) \
 						  kernel                            \
-						  kernel/**/*		                \
-						  kernel/libc
+						  kernel/*   		                \
+						  kernel/**/*
 SOURCES_C				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 SOURCES_ASM				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.S))
 INCLUDE					= include
@@ -47,7 +47,8 @@ CFLAGS					+=	\
 	-std=c99				\
 	-MMD					\
 	-MP						\
-	-I$(INCLUDE)
+	-Iinclude				\
+	-Iarch/$(ARCH)/include
 
 # Debug-only flags.
 ifdef DEBUG

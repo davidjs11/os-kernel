@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <types.h>
+#include <kernel/types.h>
 
 typedef uint64_t pte_t;
 

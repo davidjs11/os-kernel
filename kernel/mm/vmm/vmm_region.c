@@ -2,11 +2,11 @@
 
 /* Virtual memory region management. */
 
-#include <vmm.h>
-#include <pmm.h>
-#include <arch/paging.h>
-#include <kheap.h>
-#include <types.h>
+#include <kernel/vmm.h>
+#include <kernel/pmm.h>
+#include <kernel/arch/paging.h>
+#include <kernel/kheap.h>
+#include <kernel/types.h>
 
 vmm_region_t *vmm_region_create(vaddr_t addr, size_t size, vmm_prot_t prot)
 {

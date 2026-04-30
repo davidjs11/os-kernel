@@ -5,7 +5,7 @@
 #ifndef KERNEL_API_KHEAP_H
 #define KERNEL_API_KHEAP_H
 
-#include <types.h>
+#include <kernel/types.h>
 
 /* Kernel heap allocator interface. */
 typedef struct kheap_ops {

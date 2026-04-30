@@ -5,8 +5,8 @@
 #ifndef KERNEL_API_VMM_H
 #define KERNEL_API_VMM_H
 
-#include <types.h>
-#include <list.h>
+#include <kernel/types.h>
+#include <kernel/list.h>
 
 /* Page macros. */
 #define PAGE_SIZE             4096UL

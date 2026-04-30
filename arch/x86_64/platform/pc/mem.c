@@ -2,9 +2,9 @@
 
 /* Implementation of PC platform-specific memory management functionality. */
 
-#include <platform/mem.h>
-#include <libc/string.h>
-#include <types.h>
+#include <kernel/platform/mem.h>
+#include <kernel/libc/string.h>
+#include <kernel/types.h>
 #include "limine.h"
 
 /* Limine memory map request. */

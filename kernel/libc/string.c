@@ -1,6 +1,6 @@
 /*   kernel/libc/string.c   */
 
-#include <libc/string.h>
+#include <kernel/libc/string.h>
 
 void *memset(void *dest, int ch, size_t count)
 {

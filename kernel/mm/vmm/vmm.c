@@ -2,11 +2,11 @@
 
 /* Virtual memory manager implementation. */
 
-#include <vmm.h>
-#include <pmm.h>
-#include <kheap.h>
-#include <arch/paging.h>
-#include <platform/mem.h>
+#include <kernel/vmm.h>
+#include <kernel/pmm.h>
+#include <kernel/kheap.h>
+#include <kernel/arch/paging.h>
+#include <kernel/platform/mem.h>
 #include "vmm_layout.h"
 
 #define KERNEL_REGION_HHDM          0

@@ -10,6 +10,8 @@
 #include <kernel/list.h>
 #include <kernel/kheap.h>
 #include <kernel/task.h>
+#include <kernel/platform/serial.h>
+#include <kernel/kprintf.h>
 
 #define TEST_STACK_SIZE 4096
 
@@ -21,10 +23,6 @@ static cpu_context_t ctx_a;
 static cpu_context_t ctx_b;
 
 static void task_b(void);
-
-void kprintf(const char *str) {
-    str; /* Do nothing. */
-}
 
 static void task_a(void) {
     kprintf("[task_a] first entry\n");
@@ -68,15 +66,22 @@ void context_test(void) {
 void kmain(void)
 {
     arch_init();
+
     arch_interrupt_init();
     arch_interrupt_enable();
+    kprintf("[!] Initialized interrupts.\n");
+
     pmm_init(NULL);
+    kprintf("[!] Initialized PMM.\n");
+
     vmm_init();
+    kprintf("[!] Initialized VMM.\n");
 
     task_create("test task", (vaddr_t) &kmain, NULL, 0);
 
     context_test();
 
+    kprintf("[!] Starting infinite loop.\n");
     for (;;);
     return;
 }

@@ -50,6 +50,7 @@ run: $(IMAGE)
 		-cdrom $(IMAGE)								\
 		-m 256M										\
 		-serial stdio								\
+		-display none   							\
 		$(NOSTDERR)
 
 # Debug

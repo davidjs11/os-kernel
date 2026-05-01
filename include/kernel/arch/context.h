@@ -21,4 +21,3 @@ void arch_context_switch(cpu_context_t *prev, cpu_context_t *next);
 /* Setup initial stack frame and register context when creating a new task. */
 
 #endif /* KERNEL_API_ARCH_CONTEXT_H */
-

@@ -29,7 +29,7 @@ SUBDIRS					= arch/$(ARCH)                      \
 						  kernel/**/*
 SOURCES_C				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 SOURCES_ASM				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.S))
-INCLUDE					= include
+INCLUDE					= -Iinclude -Iarch/$(ARCH)/include
 OBJECTS					= $(addprefix $(BUILD)/,$(SOURCES_C:.c=.c.o) $(SOURCES_ASM:.S=.S.o))
 PLATFORM_LD				= arch/$(ARCH)/platform/$(PLATFORM)/linker.ld
 
@@ -47,8 +47,6 @@ CFLAGS					+=	\
 	-std=c99				\
 	-MMD					\
 	-MP						\
-	-Iinclude				\
-	-Iarch/$(ARCH)/include
 
 # Debug-only flags.
 ifdef DEBUG
@@ -67,13 +65,13 @@ endif
 $(BUILD)/%.c.o: %.c
 	@mkdir -p $(dir $@)
 	@echo "CC - $<"
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@ $(INCLUDE)
 
 # Assembly source files.
 $(BUILD)/%.S.o: %.S
 	@mkdir -p $(dir $@)
 	@echo "AS - $<"
-	@$(AS) $(ASFLAGS) -c $< -o $@
+	@$(AS) $(ASFLAGS) -c $< -o $@ $(INCLUDE)
 
 # Link target.
 $(TARGET): $(OBJECTS) external/limine/limine

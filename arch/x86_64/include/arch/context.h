@@ -14,10 +14,7 @@
  * Linux and FreeBSD use.
  */
 typedef struct cpu_context {
-    uint64_t rbx, rbp, r12, r13, r14, r15;
-    uint64_t rsp;
-    uint64_t rip;
-    uint64_t rflags;
+    uint64_t rbx, rbp, r12, r13, r14, r15, rsp;
 } cpu_context_t;
 
 #endif /* ARCH_X86_64_CONTEXT_H */

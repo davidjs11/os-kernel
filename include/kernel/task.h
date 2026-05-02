@@ -10,8 +10,11 @@
 #include <kernel/list.h>
 #include <kernel/vmm.h>
 
-#define KERNEL_STACK_SIZE 16 * 1024 /* 16 KiB. */
-#define TASK_NAME_LENGTH  32
+#define TASK_NAME_LENGTH    32
+#define TASK_KSTACK_SIZE    2 * 0x1000 /* 2 pages. */
+#define TASK_PRIORITY_MIN   0
+#define TASK_PRIORITY_MAX   255
+#define TASK_PRIORITY_NORM  128
 
 /* Process (task) identifier. */
 typedef uint64_t pid_t;
@@ -52,20 +55,24 @@ typedef struct task {
 } task_t;
 
 /*
- * @brief Create a new task.
+ * @brief Allocate and initialize a new task.
  *
- * Allocates and initializes a new task with its own kernel stack. The task
- * is not enqueued in the scheduler automatically, call sched_enqueue() after
- * creation.
+ * @param name     Name of the task.
+ * @param entry    Function to run, or ELF e_entry.
+ * @param priority Task priority (TASK_PRIORITY_NORM is default).
+ * @param space    NULL for kernel tasks; vmm_space_create() for a new
+ *                 userspace process; parent->space for a new thread.
+ *                 Caller is responsible of allocating/freeint the new space.
+ * @param parent   Pointer to the parent task (NULL if none).
  *
- * @param name     Human-readable name for debugging purposes.
- * @param entry    Virtual address of the task's entry point.
- * @param space    Address space for this task.
- * @param priority Scheduling priority (higher value = higher priority).
- *
- * @return Pointer to the new task, or NULL on allocation failure.
+ * @return NULL on allocation failure.
  */
-task_t *task_create(const char *name, vaddr_t entry, vmm_space_t *space, uint8_t priority);
+task_t *task_create(
+        const char *name,
+        void (*entry)(void),
+        uint8_t priority,
+        vmm_space_t *space,
+        task_t *parent);
 
 /*
  * @brief Delete a task and free its resources.
@@ -78,30 +85,10 @@ task_t *task_create(const char *name, vaddr_t entry, vmm_space_t *space, uint8_t
 void task_delete(task_t *task);
 
 /*
- * @brief Block a task, preventing it from being scheduled.
- *
- * Transitions the task to BLOCKED state and removes it from the run queue.
- * The task will not run again until task_unblock() is called on it.
- *
- * @param task The task to block.
+ * @brief Free all resources owned by task. Caller must ensure task is not on
+ *        any run queue and is not current. Does NOT destroy task->space,
+ *        caller owns that lifetime.
  */
-void task_block(task_t *task);
-
-/*
- * @brief Unblock a task, making it eligible for scheduling again.
- *
- * Transitions the task from BLOCKED to READY state and re-enqueues it
- * in the scheduler run queue.
- *
- * @param task The task to unblock.
- */
-void task_unblock(task_t *task);
-
-/*
- * @brief Get the currently running task.
- *
- * @return Pointer to the task currently executing on this CPU.
- */
-task_t *task_current(void);
+void task_delete(task_t *task);
 
 #endif /* KERNEL_API_TASK_H */

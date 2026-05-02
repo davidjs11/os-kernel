@@ -13,8 +13,7 @@ typedef struct cpu_context cpu_context_t;
 void arch_context_init(
         cpu_context_t *ctx,
         uintptr_t entry,
-        uintptr_t kstack_top,
-        bool user);
+        uintptr_t kstack_top);
 
 void arch_context_switch(cpu_context_t *prev, cpu_context_t *next);
 

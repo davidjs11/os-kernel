@@ -7,8 +7,7 @@
 void arch_context_init(
         cpu_context_t *ctx,
         uintptr_t entry,
-        uintptr_t kstack_top,
-        bool user)
+        uintptr_t kstack_top)
 {
     /* Push a fake return address onto the stack so ret jumps to entry. */
     uintptr_t *sp = (uintptr_t *) kstack_top;

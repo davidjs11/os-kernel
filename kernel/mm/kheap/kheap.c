@@ -49,5 +49,7 @@ void *kcalloc(size_t nmemb, size_t size)
 
 void kfree(void *ptr)
 {
-    kheap_ops->free(ptr);
+    if (ptr != NULL) {
+        kheap_ops->free(ptr);
+    }
 }

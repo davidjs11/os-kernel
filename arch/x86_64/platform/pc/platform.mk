@@ -60,6 +60,7 @@ debug: $(IMAGE)
 		-cdrom $(IMAGE)								\
 		-m 256M										\
 		-serial stdio								\
+		-display none								\
 		-s -S &
 	@$(GDB) $(TARGET)								\
 		-ex "target remote localhost:1234"			\

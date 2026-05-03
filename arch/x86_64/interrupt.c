@@ -154,7 +154,18 @@ void arch_interrupt_disable(void)
     __asm__ volatile ("cli" ::: "memory");
 }
 
+static void (*generic_handlers[IDT_NUM_VECTORS])(uint8_t irq);
+
+void arch_interrupt_set_handler(uint8_t vector, void (*handler)(uint8_t irq))
+{
+    if (vector < IDT_NUM_VECTORS) {
+        generic_handlers[vector] = handler;
+    }
+}
+
 void generic_handler(interrupt_frame_t *frame)
 {
-    /* TODO: do something useful here. */
+    if (generic_handlers[frame->vector] != NULL) {
+        generic_handlers[frame->vector](frame->vector);
+    }
 }

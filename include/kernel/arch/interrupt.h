@@ -20,12 +20,11 @@ void arch_interrupt_enable(void);
 void arch_interrupt_disable(void);
 
 /*
- * @brief Set an interrupt handler that will be called by the generic
- *        dispatcher. These handlers won't need to worry about context-saving,
- *        or CPU registers, with the cost of a bit of overhead.
+ * @brief Set an interrupt handler for a given interrupt vector.
  *
+ * @param vector  The vector number of the interrupt.
  * @param handler A pointer to the handler function.
  */
-void arch_interrupt_install_generic(void *(*handler)(void));
+void arch_interrupt_set_handler(uint8_t vector, void (*handler)(uint8_t irq));
 
 #endif /* KERNEL_API_ARCH_INTERRUPT_H */

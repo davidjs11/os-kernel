@@ -13,6 +13,7 @@
 #include <kernel/platform/serial.h>
 #include <kernel/kprintf.h>
 #include <kernel/sched.h>
+#include <kernel/platform/irq.h>
 
 #define TEST_STACK_SIZE 4096
 
@@ -218,6 +219,11 @@ void sched_test(void) {
     kprintf("[sched_test] done\n");
 }
 
+void irq0_handler(uint8_t irq) {
+    platform_irq_eoi(irq);
+    sched_tick();
+}
+
 /*
  * @brief Kernel entry point.
  */
@@ -228,6 +234,11 @@ void kmain(void)
     arch_interrupt_init();
     arch_interrupt_enable();
     kprintf("[!] Initialized interrupts.\n");
+
+    platform_irq_init();
+    platform_irq_unmask(0);
+    __asm__ volatile ("sti");
+    platform_irq_register(0, irq0_handler);
 
     pmm_init(NULL);
     kprintf("[!] Initialized PMM.\n");

@@ -12,6 +12,7 @@
 #include <kernel/task.h>
 #include <kernel/platform/serial.h>
 #include <kernel/kprintf.h>
+#include <kernel/sched.h>
 
 #define TEST_STACK_SIZE 4096
 
@@ -40,7 +41,59 @@ static void task_b(void) {
     /* should never reach here */
     kprintf("[task_b] ERROR: should not reach here\n");
 }
+void kmalloc_test(void) {
+    kprintf("[kmalloc_test] start\n");
 
+    /* single allocations of increasing sizes */
+    void *p1 = kmalloc(8);
+    kprintf("[kmalloc_test] 8b:    %p\n", p1);
+    void *p2 = kmalloc(64);
+    kprintf("[kmalloc_test] 64b:   %p\n", p2);
+    void *p3 = kmalloc(256);
+    kprintf("[kmalloc_test] 256b:  %p\n", p3);
+    void *p4 = kmalloc(4096);
+    kprintf("[kmalloc_test] 4096b: %p\n", p4);
+    void *p5 = kmalloc(8192);
+    kprintf("[kmalloc_test] 8192b: %p\n", p5);
+
+    /* free and reallocate */
+    kfree(p1);
+    kfree(p3);
+    void *p6 = kmalloc(8);
+    kprintf("[kmalloc_test] realloc 8b:   %p (should reuse p1=%p)\n", p6, p1);
+    void *p7 = kmalloc(256);
+    kprintf("[kmalloc_test] realloc 256b: %p (should reuse p3=%p)\n", p7, p3);
+
+    /* many small allocations */
+    void *ptrs[64];
+    for (int i = 0; i < 64; i++) {
+        ptrs[i] = kmalloc(64);
+        if (!ptrs[i]) {
+            kprintf("[kmalloc_test] FAIL: alloc %d returned NULL\n", i);
+            return;
+        }
+    }
+    kprintf("[kmalloc_test] 64 small allocs OK\n");
+
+    /* free all */
+    for (int i = 0; i < 64; i++)
+        kfree(ptrs[i]);
+    kprintf("[kmalloc_test] 64 small frees OK\n");
+
+    /* two consecutive page-sized allocs — this is what task_create does */
+    void *s1 = kmalloc(sizeof(task_t));
+    kprintf("[kmalloc_test] task_t sized: %p\n", s1);
+    void *s2 = kmalloc(8192);
+    kprintf("[kmalloc_test] kstack sized: %p\n", s2);
+    if (!s1 || !s2)
+        kprintf("[kmalloc_test] FAIL: task_create pattern failed\n");
+    else
+        kprintf("[kmalloc_test] task_create pattern OK\n");
+    kfree(s1);
+    kfree(s2);
+
+    kprintf("[kmalloc_test] done\n");
+}
 void context_test(void) {
     kprintf("[main] initializing contexts\n");
     arch_context_init(
@@ -100,6 +153,71 @@ void task_test(void) {
     kprintf("task_test done\n");
 }
 
+    static volatile int order[8];
+    static volatile int order_idx = 0;
+
+static void task_a_sched(void) {
+    order[order_idx++] = 1;
+    kprintf("[task_a] first run\n");
+    sched_yield();
+    order[order_idx++] = 3;
+    kprintf("[task_a] second run\n");
+    sched_exit(0);
+}
+
+static void task_b_sched(void) {
+    order[order_idx++] = 2;
+    kprintf("[task_b] first run\n");
+    sched_yield();
+    order[order_idx++] = 4;
+    kprintf("[task_b] second run\n");
+    sched_exit(0);
+}
+
+
+void sched_test(void) {
+    task_t *a = task_create("task_a", task_a_sched, TASK_PRIORITY_NORM, NULL, NULL);
+    kprintf("[sched_test] task_a created\n");
+    task_t *b = task_create("task_b", task_b_sched, TASK_PRIORITY_NORM, NULL, NULL);
+    kprintf("[sched_test] task_b created\n");
+
+    /* Test 1: basic enqueue and yield between two tasks. */
+    sched_enqueue(a);
+    sched_enqueue(b);
+
+    kprintf("[sched_test] yielding into task_a\n");
+    sched_yield();
+
+    /* Verify execution order. */
+    kprintf("[sched_test] verifying order\n");
+
+    if (order[0] != 1) {
+        kprintf("[FAIL] expected task_a first, got %d\n", order[0]);
+    } else {
+        kprintf("[OK]   task_a ran first\n");
+    }
+
+    if (order[1] != 2) {
+        kprintf("[FAIL] expected task_b second, got %d\n", order[1]);
+    } else {
+        kprintf("[OK]   task_b ran second\n");
+    }
+
+    if (order[2] != 3) {
+        kprintf("[FAIL] expected task_a third, got %d\n", order[2]);
+    } else {
+        kprintf("[OK]   task_a resumed correctly\n");
+    }
+
+    if (order[3] != 4) {
+        kprintf("[FAIL] expected task_b fourth, got %d\n", order[3]);
+    } else {
+        kprintf("[OK]   task_b resumed correctly\n");
+    }
+
+    kprintf("[sched_test] done\n");
+}
+
 /*
  * @brief Kernel entry point.
  */
@@ -117,13 +235,14 @@ void kmain(void)
     vmm_init();
     kprintf("[!] Initialized VMM.\n");
 
-    // task_create("test task", (vaddr_t) &kmain, 0, NULL);
+    sched_init();
+    kprintf("[!] Initialized scheduler.\n");
 
-    context_test();
-    task_test();
+    // kmalloc_test();
+    // context_test();
+    // task_test();
+    // sched_test();
 
-    kprintf("[!] Starting infinite loop.\n");
-    for (;;);
-    return;
+    sched_yield();
 }
 

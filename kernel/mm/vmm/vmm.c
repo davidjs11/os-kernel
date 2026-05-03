@@ -104,6 +104,19 @@ static void vmm_kernel_space_init(void)
         .phys.base = platform_mem_get_kernel_image_paddr(),
         .phys.size = platform_mem_get_kernel_image_size(),
     };
+
+    /* Pre-allocate a piece of heap to avoid initial stack overflow. */
+    for (vaddr_t va = KERNEL_LAYOUT_HEAP_BASE;
+         va < KERNEL_LAYOUT_HEAP_BASE + (1024 * 1024); /* 1 MiB. */
+         va += PAGE_SIZE) {
+        paddr_t pa = pmm_alloc();
+        arch_paging_map(
+            kernel_space.pt_phys,
+            va,
+            pa,
+            PROT_READ | PROT_WRITE | PROT_PRESENT
+        );
+    }
 }
 
 void vmm_init(void)
@@ -161,10 +174,10 @@ void vmm_handle_page_fault(
     vmm_region_t *region = vmm_space_find_region(current_space, addr);
     if (region == NULL) {
         /* TODO: Segfault. */
+        for (;;) __asm__ volatile("hlt");
     }
 
     /* TODO: Compare permissions against region. */
-
     region->object->ops->map(
         current_space,
         region,

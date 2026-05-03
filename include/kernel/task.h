@@ -75,19 +75,11 @@ task_t *task_create(
         task_t *parent);
 
 /*
- * @brief Delete a task and free its resources.
- *
- * Frees the task's kernel stack and the task struct itself. The task must
- * not be running or enqueued in the scheduler when this is called.
+ * @brief Delete a task and free its resources. Frees the task's kernel stack
+ *        and the task struct itself. The task must not be running or enqueued
+ *        in the scheduler when this is called.
  *
  * @param task The task to delete.
- */
-void task_delete(task_t *task);
-
-/*
- * @brief Free all resources owned by task. Caller must ensure task is not on
- *        any run queue and is not current. Does NOT destroy task->space,
- *        caller owns that lifetime.
  */
 void task_delete(task_t *task);
 

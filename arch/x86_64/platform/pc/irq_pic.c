@@ -6,23 +6,13 @@
  */
 
 #include <stdint.h>
-#include <arch/io.h>
 #include <kernel/platform/irq.h>
 #include <kernel/arch/interrupt.h>
-
-#define IRQ_BASE        0x20
-#define IRQ_VECTOR(n)   (IRQ_BASE + (n))
-
-#define IRQ_TIMER       0
-#define IRQ_KEYBOARD    1
-#define IRQ_CASCADE     2
-#define IRQ_SERIAL2     3
-#define IRQ_SERIAL1     4
-#define IRQ_RTC         8
-#define IRQ_MOUSE       12
-#define IRQ_FPU         13
-#define IRQ_ATA1        14
-#define IRQ_ATA2        15
+#include <kernel/kprintf.h>
+#include <kernel/irq.h>
+#include "pic.h"
+#include "../idt.h"
+#include "../io.h"
 
 /* 8259 PIC port addresses. */
 #define PIC1_CMD    0x20
@@ -38,7 +28,17 @@
 #define PIC_EOI         0x20    /* End Of Interrupt (EOI).           */
 #define PIC_READ_ISR    0x0B    /* Read in-service register.         */
 
-static void pic_remap(uint8_t base_master, uint8_t base_slave) {
+/* PIC's IRQ dispatcher. */ 
+void pic_handle_irq(interrupt_frame_t *frame)
+{
+    /* TODO: Translate hardware IRQ vector to virtual IRQ vector. */
+    uint8_t irq = frame->vector - 0x20;
+    irq_handle(irq);
+    platform_irq_eoi(irq);
+}
+
+static void pic_remap(uint8_t base_master, uint8_t base_slave)
+{
     uint8_t mask1 = inb(PIC1_DATA); /* Save masks. */
     uint8_t mask2 = inb(PIC2_DATA);
 
@@ -61,12 +61,18 @@ static void pic_remap(uint8_t base_master, uint8_t base_slave) {
     /* Restore masks. */
     outb(PIC1_DATA, mask1);
     outb(PIC2_DATA, mask2);
+
+    /* Set IRQ common handler for all IRQs. */
+    for (size_t i = 0x20; i < 0x2f; i++) {
+        isr_set_handler(i, pic_handle_irq);
+    }
 }
 
-static uint16_t pic_read_isr(void) {
+static uint16_t pic_read_isr(void)
+{
     outb(PIC1_CMD, PIC_READ_ISR);
     outb(PIC2_CMD, PIC_READ_ISR);
-    return ((uint16_t)inb(PIC2_CMD) << 8) | inb(PIC1_CMD);
+    return ((uint16_t) inb(PIC2_CMD) << 8) | inb(PIC1_CMD);
 }
 
 void platform_irq_init(void)
@@ -78,13 +84,15 @@ void platform_irq_init(void)
     outb(PIC2_DATA, 0xff);
 }
 
-void platform_irq_mask(uint8_t irq) {
+void platform_irq_mask(uint8_t irq)
+{
     uint16_t port = (irq < 8) ? PIC1_DATA : PIC2_DATA;
     uint8_t  bit  = irq & 0x07;
     outb(port, inb(port) | (1 << bit));
 }
 
-void platform_irq_unmask(uint8_t irq) {
+void platform_irq_unmask(uint8_t irq)
+{
     uint16_t port = (irq < 8) ? PIC1_DATA : PIC2_DATA;
     uint8_t  bit  = irq & 0x07;
 
@@ -95,28 +103,24 @@ void platform_irq_unmask(uint8_t irq) {
     outb(port, inb(port) & ~(1 << bit));
 }
 
-void platform_irq_eoi(uint8_t irq) {
+void platform_irq_eoi(uint8_t irq)
+{
     /* Check for spurious IRQ before sending EOI. */
     if (irq == 7 && !(pic_read_isr() & (1 << 7))) {
         return;
     }
 
-    /* Still need to ack master */
+    /* Still need to ACK master */
     if (irq == 15 && !(pic_read_isr() & (1 << 15))) {
         outb(PIC1_CMD, PIC_EOI);
         return;
     }
 
-    /* Ack slave first. */
+    /* ACK slave first. */
     if (irq >= 8) {
         outb(PIC2_CMD, PIC_EOI);
     }
 
-    /* Always ack master. */
+    /* Always ACK master. */
     outb(PIC1_CMD, PIC_EOI);
-}
-
-void platform_irq_register(uint8_t irq, void (*handler)(uint8_t irq))
-{
-    arch_interrupt_set_handler(irq, handler);
 }

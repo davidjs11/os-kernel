@@ -41,6 +41,6 @@ void platform_irq_eoi(uint8_t irq);
  * @param irq     IRQ vector number.
  * @param handler Handler function for the IRQ.
  */
-void platform_irq_register(uint8_t irq, void (*handler)(uint8_t irq));
+void platform_irq_register(uint8_t irq, void (*handler)(void));
 
 #endif /* KERNEL_API_PLATFORM_IRQ_H */

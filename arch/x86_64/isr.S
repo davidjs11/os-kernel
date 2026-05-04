@@ -1,19 +1,17 @@
 /*   arch/x86_64/isr.S   */
 
 /* Generic ISR-handler stub. */
-
-/* Macro for defining ISRs. */
 .macro ISR n handler error
-.global isr_handler_\n
-isr_handler_\n:
-
-    /* Vector code. */
-    pushq $\n 
+.global isr_stub_\n
+isr_stub_\n:
 
     /* Dummy error code. */
     .ifb \error
         pushq $0
     .endif
+
+    /* Vector code. */
+    pushq $\n 
 
     /* Save registers. */
     pushq %rax
@@ -60,35 +58,107 @@ isr_handler_\n:
 .endm
 
 .section .text
-ISR  0 generic_handler       /* Divide error. */
-ISR  1 generic_handler       /* Debug exception. */
-ISR  2 generic_handler       /* NMI interrupt. */
-ISR  3 generic_handler       /* Breakpoint. */
-ISR  4 generic_handler       /* Overflow. */
-ISR  5 generic_handler       /* BOUND range exceeded. */
-ISR  6 generic_handler       /* Invalid opcode (Undefined opcode). */
-ISR  7 generic_handler       /* Device not available (no math coporocessor). */
-ISR  8 generic_handler ERROR /* Double fault. */
-ISR  9 generic_handler       /* Coprocessor segment overrun. */
-ISR 10 generic_handler ERROR /* Invalid TSS. */
-ISR 11 generic_handler ERROR /* Segment not present. */
-ISR 12 generic_handler ERROR /* Stack-segment fault. */
-ISR 13 generic_handler ERROR /* General protection. */
-ISR 14 pf_handler      ERROR /* Page fault. */
-ISR 15 generic_handler       /* Intel-reserved. */
-ISR 16 generic_handler       /* x87 FPU floating-point error. */
-ISR 17 generic_handler ERROR /* Alignment check. */
-ISR 18 generic_handler       /* Machine check. */
-ISR 19 generic_handler       /* SIMD floating-point exception. */
-ISR 20 generic_handler       /* Virtualization exception. */
-ISR 21 generic_handler ERROR /* Control protection exception. */
-ISR 22 generic_handler       /* Intel-reserved. */
-ISR 23 generic_handler       /* Intel-reserved. */
-ISR 24 generic_handler       /* Intel-reserved. */
-ISR 25 generic_handler       /* Intel-reserved. */
-ISR 26 generic_handler       /* Intel-reserved. */
-ISR 27 generic_handler       /* Intel-reserved. */
-ISR 28 generic_handler       /* Intel-reserved. */
-ISR 29 generic_handler       /* Intel-reserved. */
-ISR 30 generic_handler       /* Intel-reserved. */
-ISR 31 generic_handler       /* Intel-reserved. */
+/* Exceptions. */
+ISR  0 isr_common_handler       /* Divide error.                      */
+ISR  1 isr_common_handler       /* Debug exception.                   */
+ISR  2 isr_common_handler       /* NMI interrupt.                     */
+ISR  3 isr_common_handler       /* Breakpoint.                        */
+ISR  4 isr_common_handler       /* Overflow.                          */
+ISR  5 isr_common_handler       /* BOUND range exceeded.              */
+ISR  6 isr_common_handler       /* Invalid opcode (Undefined opcode). */
+ISR  7 isr_common_handler       /* No math coprocessor.               */
+ISR  8 isr_common_handler ERROR /* Double fault.                      */
+ISR  9 isr_common_handler       /* Coprocessor segment overrun.       */
+ISR 10 isr_common_handler ERROR /* Invalid TSS.                       */
+ISR 11 isr_common_handler ERROR /* Segment not present.               */
+ISR 12 isr_common_handler ERROR /* Stack-segment fault.               */
+ISR 13 isr_common_handler ERROR /* General protection.                */
+ISR 14 isr_common_handler ERROR /* Page fault.                        */
+ISR 15 isr_common_handler       /* Intel-reserved.                    */
+ISR 16 isr_common_handler       /* x87 FPU floating-point error.      */
+ISR 17 isr_common_handler ERROR /* Alignment check.                   */
+ISR 18 isr_common_handler       /* Machine check.                     */
+ISR 19 isr_common_handler       /* SIMD floating-point exception.     */
+ISR 20 isr_common_handler       /* Virtualization exception.          */
+ISR 21 isr_common_handler ERROR /* Control protection exception.      */
+ISR 22 isr_common_handler       /* Intel-reserved.                    */
+ISR 23 isr_common_handler       /* Intel-reserved.                    */
+ISR 24 isr_common_handler       /* Intel-reserved.                    */
+ISR 25 isr_common_handler       /* Intel-reserved.                    */
+ISR 26 isr_common_handler       /* Intel-reserved.                    */
+ISR 27 isr_common_handler       /* Intel-reserved.                    */
+ISR 28 isr_common_handler       /* Intel-reserved.                    */
+ISR 29 isr_common_handler       /* Intel-reserved.                    */
+ISR 30 isr_common_handler       /* Intel-reserved.                    */
+ISR 31 isr_common_handler       /* Intel-reserved.                    */
+
+/* Hardware IRQs. */
+ISR 32 isr_common_handler       /* IRQ0 - Timer.      */
+ISR 33 isr_common_handler       /* IRQ1 - Keyboard.   */
+ISR 34 isr_common_handler       /* IRQ2 - Cascade.    */
+ISR 35 isr_common_handler       /* IRQ3 - Serial 2.   */
+ISR 36 isr_common_handler       /* IRQ4 - Serial 1.   */
+ISR 37 isr_common_handler       /* IRQ5 - Parallel 2. */
+ISR 38 isr_common_handler       /* IRQ6 - Floppy.     */
+ISR 39 isr_common_handler       /* IRQ7 - Parallel 1. */
+ISR 40 isr_common_handler       /* IRQ8 - RTC.        */
+ISR 41 isr_common_handler       /* IRQ9 - ACPI.       */
+ISR 42 isr_common_handler       /* IRQ10 - Open.      */
+ISR 43 isr_common_handler       /* IRQ11 - Open.      */
+ISR 44 isr_common_handler       /* IRQ12 - Mouse.     */
+ISR 45 isr_common_handler       /* IRQ13 - FPU.       */
+ISR 46 isr_common_handler       /* IRQ14 - ATA1.      */
+ISR 47 isr_common_handler       /* IRQ15 - ATA2.      */
+
+/* Pointer table. */
+.section .rodata
+.global isr_stubs
+isr_stubs:
+    .quad isr_stub_0
+    .quad isr_stub_1
+    .quad isr_stub_2
+    .quad isr_stub_3
+    .quad isr_stub_4
+    .quad isr_stub_5
+    .quad isr_stub_6
+    .quad isr_stub_7
+    .quad isr_stub_8
+    .quad isr_stub_9
+    .quad isr_stub_10
+    .quad isr_stub_11
+    .quad isr_stub_12
+    .quad isr_stub_13
+    .quad isr_stub_14
+    .quad isr_stub_15
+    .quad isr_stub_16
+    .quad isr_stub_17
+    .quad isr_stub_18
+    .quad isr_stub_19
+    .quad isr_stub_20
+    .quad isr_stub_21
+    .quad isr_stub_22
+    .quad isr_stub_23
+    .quad isr_stub_24
+    .quad isr_stub_25
+    .quad isr_stub_26
+    .quad isr_stub_27
+    .quad isr_stub_28
+    .quad isr_stub_29
+    .quad isr_stub_30
+    .quad isr_stub_31
+    .quad isr_stub_32
+    .quad isr_stub_33
+    .quad isr_stub_34
+    .quad isr_stub_35
+    .quad isr_stub_36
+    .quad isr_stub_37
+    .quad isr_stub_38
+    .quad isr_stub_39
+    .quad isr_stub_40
+    .quad isr_stub_41
+    .quad isr_stub_42
+    .quad isr_stub_43
+    .quad isr_stub_44
+    .quad isr_stub_45
+    .quad isr_stub_46
+    .quad isr_stub_47

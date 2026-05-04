@@ -2,18 +2,21 @@
 
 /* Kernel main entry point. */
 
-#include <kernel/arch.h>
+#include <kernel/arch/init.h>
 #include <kernel/arch/paging.h>
 #include <kernel/arch/interrupt.h>
+#include <kernel/platform/init.h>
+#include <kernel/platform/serial.h>
+#include <kernel/platform/irq.h>
+#include <kernel/platform/timer.h>
 #include <kernel/pmm.h>
 #include <kernel/vmm.h>
 #include <kernel/list.h>
 #include <kernel/kheap.h>
 #include <kernel/task.h>
-#include <kernel/platform/serial.h>
 #include <kernel/kprintf.h>
 #include <kernel/sched.h>
-#include <kernel/platform/irq.h>
+#include <kernel/ktimer.h>
 
 #define TEST_STACK_SIZE 4096
 
@@ -230,15 +233,9 @@ void irq0_handler(uint8_t irq) {
 void kmain(void)
 {
     arch_init();
-
-    arch_interrupt_init();
+    platform_init();
+    ktimer_init(100);
     arch_interrupt_enable();
-    kprintf("[!] Initialized interrupts.\n");
-
-    platform_irq_init();
-    platform_irq_unmask(0);
-    __asm__ volatile ("sti");
-    platform_irq_register(0, irq0_handler);
 
     pmm_init(NULL);
     kprintf("[!] Initialized PMM.\n");
@@ -249,11 +246,15 @@ void kmain(void)
     sched_init();
     kprintf("[!] Initialized scheduler.\n");
 
+    uint64_t a = ktimer_ticks();
+    kprintf("ticks since kernel started: %d\n", a);
+
     // kmalloc_test();
     // context_test();
     // task_test();
     // sched_test();
 
     sched_yield();
+    for (;;);
 }
 

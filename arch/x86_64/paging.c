@@ -154,6 +154,7 @@ void pf_handler(interrupt_frame_t *frame)
 void arch_paging_init()
 {
     hhdm_offset = platform_mem_get_hhdm_vaddr();
+    isr_set_handler(IDT_ENTRY_PF, pf_handler);
 }
 
 paddr_t arch_paging_space_create(void)

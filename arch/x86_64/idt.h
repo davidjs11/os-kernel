@@ -17,6 +17,9 @@
 #define IDT_TYPE_INTERRUPT  0xE /* Clears IF on entry.           */
 #define IDT_TYPE_TRAP       0xF /* Preserves IF on entry.        */
 
+/* TODO: add others. */
+#define IDT_ENTRY_PF        14 /* Page Fault. */
+
 /* Interrupt/Trap gate (SDM Vol. 3A Fig. 7-8).                            */
 typedef union __attribute__((packed)) idt_gate_desc {
     uint64_t raw[2];
@@ -80,5 +83,35 @@ typedef struct interrupt_frame {
     /* CPU-pushed */
     uint64_t rip, cs, rflags, rsp, ss;
 } interrupt_frame_t;
+
+/*
+ * @brief Initialize IDT.
+ */
+void idt_init(void);
+
+
+/*
+ * @brief Set an interrupt gate for an specific interrupt vector in IDT.
+ *
+ * @param vec     Vector number of the interrupt.
+ * @param handler Handler function.
+ * @param ist     Interrupt Stack Table index.
+ * @param dpl     Descriptor Privilege Level.
+ * @param type    Type of the interrupt.
+ */
+void idt_set_gate(
+    uint8_t vector,
+    void (*handler)(void),
+    uint8_t ist,
+    uint8_t dpl,
+    uint8_t type);
+
+/*
+ * @brief Set an interrupt handler for a given interrupt vector.
+ *
+ * @param vec     Vector number of the interrupt.
+ * @param handler Handler function.
+ */
+void isr_set_handler(uint8_t vector, void (*handler)(interrupt_frame_t *frame));
 
 #endif /* ARCH_X86_64_INTERRUPT_H */

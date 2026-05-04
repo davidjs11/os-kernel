@@ -1,4 +1,4 @@
-/*   arch/x86_64/include/arch/io.h   */
+/*   arch/x86_64/io.h   */
 
 /* x86_64 Input/Output utilities. */
 

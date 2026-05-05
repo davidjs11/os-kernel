@@ -6,6 +6,7 @@
 #include <kernel/irq.h>
 #include <kernel/platform/timer.h>
 #include <kernel/kprintf.h>
+#include <kernel/sched.h>
 
 static uint64_t ticks;
 static uint32_t freq;
@@ -13,6 +14,7 @@ static uint32_t freq;
 void ktimer_tick(void)
 {
     ticks++;
+    sched_tick();
 }
 
 void ktimer_init(uint32_t _freq)

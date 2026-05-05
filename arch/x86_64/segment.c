@@ -3,6 +3,9 @@
 #include "segment.h"
 #include <stddef.h>
 #include <kernel/libc/string.h>
+#include <kernel/task.h>
+#include <kernel/sched.h>
+#include <kernel/kprintf.h>
 
 /* GDT and TSS declaration. */
 __attribute__((aligned(16))) static gdt_t gdt; /* General Descriptor Table. */
@@ -80,4 +83,11 @@ void segment_init(void)
         : "r" ((uint16_t) SEL_TSS)
         : "memory"
     );
+}
+
+void tss_update_rsp0(void) {
+    task_t *task = sched_current();
+    if (task != NULL) {
+        tss.rsp[0] = (uintptr_t) (task->kstack + task->kstack_size);
+    }
 }

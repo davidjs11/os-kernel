@@ -3,11 +3,13 @@
 /* Kernel scheduler implementation. */
 
 #include <kernel/sched.h>
+#include <kernel/kprintf.h>
 
 static sched_ops_t   *sched_ops = SCHED_OPS_DEFAULT;
-static task_t        *current = NULL;
-static task_t        *idle    = NULL;
+static task_t        *current   = NULL;
+static task_t        *idle      = NULL;
 static cpu_context_t kmain_context; /* Saves kmain state separately. */
+bool need_reschedule = false;
 
 /* Idle task function. */
 static void idle_function(void) {
@@ -36,8 +38,12 @@ static void sched_switch(task_t *next) {
     arch_context_switch(&prev->context, &next->context);
 }
 
-void sched_init(void)
+void sched_init(sched_ops_t *ops)
 {
+    if (ops != NULL) {
+        sched_ops = ops;
+    }
+
     sched_ops->init();
 
     idle = task_create("idle", idle_function, TASK_PRIORITY_MIN, NULL, NULL);
@@ -76,41 +82,13 @@ void sched_unblock(task_t *task)
     sched_ops->unblock(task);
 }
 
-void sched_yield(void)
-{
-    task_t *prev = current;
-    task_t *next = sched_ops->pick_next();
-
-    if (next == NULL) {
-        next = idle;
-    }
-
-    /* Re-enqueue prev if still ready. */
-    if (prev != idle && prev != NULL && prev->state == TASK_RUNNING) {
-        sched_ops->enqueue(prev);
-    }
-
-    /*
-     * If context is kmain, save current context into kmain's context and not
-     * into idle task's context.
-     */
-    if (prev == NULL) {
-        next->state = TASK_RUNNING;
-        current = next;
-        arch_context_switch(&kmain_context, &next->context);
-        return;
-    }
-
-    sched_switch(next);
+void sched_yield(void) {
+    need_reschedule = true;
 }
 
 void sched_tick(void)
 {
-    if (sched_ops->tick != NULL) {
-        sched_ops->tick();
-    } else {
-        sched_yield();
-    }
+    need_reschedule = true;
 }
 
 void sched_exit(int exit_code)
@@ -129,4 +107,39 @@ void sched_exit(int exit_code)
 
 task_t *sched_current(void) {
     return current;
+}
+
+uint64_t sched_resched(uintptr_t current_stack_pointer) {
+    if (sched_ops == NULL || !need_reschedule) {
+        return current_stack_pointer;
+    }
+    need_reschedule = false;
+
+    task_t *prev = current;
+    task_t *next = sched_ops->pick_next();
+
+    if (next == NULL) {
+        next = idle;
+    }
+    if (next == prev) {
+        return current_stack_pointer;
+    }
+
+    if (prev != NULL && prev->state == TASK_RUNNING) {
+        sched_ops->enqueue(prev);
+    }
+
+    /* Save prev's stack pointer. */
+    if (prev != NULL) {
+        if (prev->state == TASK_RUNNING) {
+            sched_ops->enqueue(prev);
+        }
+        prev->state = TASK_READY;
+        arch_context_set_stack_pointer(&prev->context, current_stack_pointer);
+    }
+
+    next->state = TASK_RUNNING;
+    current     = next;
+
+    return arch_context_get_stack_pointer(&next->context);
 }

@@ -23,14 +23,16 @@ typedef struct sched_ops {
 
 /* List of scheduler algorithms. */
 extern sched_ops_t _sched_algorithm_fifo;
+extern sched_ops_t _sched_algorithm_rr;
 #define SCHED_ALGORITHM_FIFO  (sched_ops_t *) (&_sched_algorithm_fifo)
-#define SCHED_OPS_DEFAULT     SCHED_ALGORITHM_FIFO
+#define SCHED_ALGORITHM_RR    (sched_ops_t *) (&_sched_algorithm_rr)
+#define SCHED_OPS_DEFAULT     SCHED_ALGORITHM_RR
 
 /*
  * @brief Initialize the scheduler. Must be called before any task is enqueued.
  *        Creates the idle task internally.
  */
-void sched_init(void);
+void sched_init(sched_ops_t *ops);
 
 /*
  * @brief Add a task to the run queue. State must be TASK_READY.

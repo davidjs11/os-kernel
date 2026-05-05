@@ -178,6 +178,33 @@ static void task_b_sched(void) {
     sched_exit(0);
 }
 
+static void task_a_rr(void) {
+    for (;;) {
+        kprintf("A");
+        for (volatile int i = 0; i < 1000000; i++);
+    }
+}
+
+static void task_b_rr(void) {
+    for (;;) {
+        kprintf("B");
+        for (volatile int i = 0; i < 500000; i++);
+    }
+}
+
+static void task_c_rr(void) {
+    for (;;) {
+        kprintf("C");
+        for (volatile int i = 0; i < 100000; i++);
+    }
+}
+
+static void task_d_rr(void) {
+    for (;;) {
+        kprintf("D");
+        for (volatile int i = 0; i < 1000000; i++);
+    }
+}
 
 void sched_test(void) {
     task_t *a = task_create("task_a", task_a_sched, TASK_PRIORITY_NORM, NULL, NULL);
@@ -233,28 +260,35 @@ void irq0_handler(uint8_t irq) {
 void kmain(void)
 {
     arch_init();
-    platform_init();
-    ktimer_init(100);
-    arch_interrupt_enable();
-
     pmm_init(NULL);
     kprintf("[!] Initialized PMM.\n");
-
     vmm_init();
     kprintf("[!] Initialized VMM.\n");
-
-    sched_init();
+    sched_init(NULL);
     kprintf("[!] Initialized scheduler.\n");
-
-    uint64_t a = ktimer_ticks();
-    kprintf("ticks since kernel started: %d\n", a);
+    platform_init();
+    ktimer_init(100);
 
     // kmalloc_test();
     // context_test();
     // task_test();
     // sched_test();
 
-    sched_yield();
-    for (;;);
+    task_t *a = task_create("a", task_a_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    kprintf("task a created\n");
+    task_t *b = task_create("b", task_b_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    kprintf("task b created\n");
+    task_t *c = task_create("c", task_c_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    kprintf("task c created\n");
+    task_t *d = task_create("d", task_d_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    kprintf("task d created\n");
+
+    sched_enqueue(a);
+    sched_enqueue(b);
+    sched_enqueue(c);
+    sched_enqueue(d);
+
+    arch_interrupt_enable();
+    for (;;) __asm__ ("hlt");
 }
 

@@ -43,3 +43,24 @@ arch_context_switch:
     ret
 
 .size arch_context_switch, . - arch_context_switch
+
+.global do_resched
+do_resched:
+    /* Check need_reschedule. */
+    movq need_reschedule(%rip), %rax
+    testq %rax, %rax
+    jz .no_switch
+
+    /* Call kernel sched_resched with current rsp. */
+    movq %rsp, %rdi
+
+    /* Returns new rsp in rax. */
+    call sched_resched
+
+    ret
+
+.no_switch:
+    movq %rsp, %rax /* Return current rsp unchanged. */
+    ret
+
+.size do_resched, . - do_resched

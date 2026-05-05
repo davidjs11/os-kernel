@@ -18,6 +18,7 @@
 #define IDT_TYPE_TRAP       0xF /* Preserves IF on entry.        */
 
 /* TODO: add others. */
+#define IDT_ENTRY_GPF       13 /* General Protection Fault. */
 #define IDT_ENTRY_PF        14 /* Page Fault. */
 
 /* Interrupt/Trap gate (SDM Vol. 3A Fig. 7-8).                            */

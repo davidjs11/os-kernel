@@ -35,6 +35,14 @@ isr_stub_\n:
     mov %rsp, %rdi
     call \handler
 
+    /* Pass current iterrupt frame RSP to sched_resched. */
+    movq %rsp, %rdi         /* RSP before call, clean interrupt frame top. */
+    call sched_resched      /* Takes rsp, returns new RSP. */
+    movq %rax, %rsp
+
+    /* Update RSP0 with top of next task's kernel stack. */
+    call tss_update_rsp0
+
     /* Load registers. */
     popq %r15
     popq %r14

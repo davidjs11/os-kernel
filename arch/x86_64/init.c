@@ -7,9 +7,11 @@
 #include "segment.h"
 #include "idt.h"
 #include "pgtable.h"
+#include "exception.h"
 
 void arch_init(void)
 {
     segment_init();
     idt_init();
+    isr_set_handler(IDT_ENTRY_GPF, exception_gpf_handler);
 }

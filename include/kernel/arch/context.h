@@ -15,8 +15,9 @@ void arch_context_init(
         uintptr_t entry,
         uintptr_t kstack_top);
 
-void arch_context_switch(cpu_context_t *prev, cpu_context_t *next);
+uintptr_t arch_context_get_stack_pointer(cpu_context_t *ctx);
+uintptr_t arch_context_set_stack_pointer(cpu_context_t *ctx, uintptr_t sp);
 
-/* Setup initial stack frame and register context when creating a new task. */
+void arch_context_switch(cpu_context_t *prev, cpu_context_t *next);
 
 #endif /* KERNEL_API_ARCH_CONTEXT_H */

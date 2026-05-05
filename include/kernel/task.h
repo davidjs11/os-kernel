@@ -41,6 +41,10 @@ typedef struct task {
     uint8_t       *kstack;     /* Kernel stack pointer for the task. */
     size_t        kstack_size; /* Size of this task's kernel stack.  */
 
+    /* User stack. */
+    uint8_t       *ustack;     /* User stack pointer for the task.   */
+    size_t        ustack_size; /* Size of this task's user stack.    */
+
     /* Arch-defined saved register state. */
     cpu_context_t context;     /* Saved registers.                   */
 

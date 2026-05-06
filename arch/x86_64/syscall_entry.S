@@ -1,7 +1,8 @@
 /*   arch/x86_64/syscall_entry.S   */
 
 KSTACK_TOP_OFFSET = 0    /* Must match offsetof(percpu_t, kstack_top). */
-USER_RSP_OFFSET   = 8    /* must match offsetof(percpu_t, user_rsp).   */
+USER_RSP_OFFSET   = 8    /* Must match offsetof(percpu_t, user_rsp).   */
+SYSCALL_MAX       = 5    /* Number of syscalls in the system.   */
 
 .section .text
 .global syscall_entry
@@ -32,9 +33,9 @@ syscall_entry:
     movq %r10, %rcx
 
     /* Dispatch syscall handler. */
-    // cmpq $SYSCALL_MAX, %rax
+    cmpq $SYSCALL_MAX, %rax
     jae .invalid_syscall
-    // callq *syscall_table(, %rax, 8)
+    callq *syscall_table(, %rax, 8)
     jmp .syscall_return
 
 .invalid_syscall:

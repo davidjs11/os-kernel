@@ -46,7 +46,7 @@ void sched_init(sched_ops_t *ops)
 
     sched_ops->init();
 
-    idle = task_create("idle", idle_function, TASK_PRIORITY_MIN, NULL, NULL);
+    idle = task_create_kernel("idle", idle_function, TASK_PRIORITY_MIN);
     idle->state = TASK_RUNNING;
 
     /* As sched_init is called from kmain, current task is NULL. */

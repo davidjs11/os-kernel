@@ -12,6 +12,8 @@
 
 #define TASK_NAME_LENGTH    32
 #define TASK_KSTACK_SIZE    2 * 0x1000 /* 2 pages. */
+#define TASK_USTACK_SIZE    2 * 0x1000 /* 2 pages. */
+#define TASK_USTACK_BASE    0x0000000000000000
 #define TASK_PRIORITY_MIN   0
 #define TASK_PRIORITY_MAX   255
 #define TASK_PRIORITY_NORM  128
@@ -51,6 +53,7 @@ typedef struct task {
     /* Scheduling. */
     uint8_t       priority;    /* Priority level of the task.        */
     list_node_t   sched_node;  /* Mode inside scheduler's list.      */
+    void          (*entry)(void); /* Task's entry point.             */
 
     /* Hierarchy (future). */
     struct task   *parent;     /* Parent task.                       */
@@ -59,24 +62,32 @@ typedef struct task {
 } task_t;
 
 /*
- * @brief Allocate and initialize a new task.
+ * @brief Allocate and initialize a new kernel task.
  *
- * @param name     Name of the task.
+ * @param name     Name of the kernel task.
  * @param entry    Function to run, or ELF e_entry.
  * @param priority Task priority (TASK_PRIORITY_NORM is default).
- * @param space    NULL for kernel tasks; vmm_space_create() for a new
- *                 userspace process; parent->space for a new thread.
- *                 Caller is responsible of allocating/freeint the new space.
- * @param parent   Pointer to the parent task (NULL if none).
  *
  * @return NULL on allocation failure.
  */
-task_t *task_create(
+task_t *task_create_kernel(
         const char *name,
         void (*entry)(void),
-        uint8_t priority,
-        vmm_space_t *space,
-        task_t *parent);
+        uint8_t priority);
+
+/*
+ * @brief Allocate and initialize a new user task.
+ *
+ * @param name     Name of the kernel task.
+ * @param entry    Function to run, or ELF e_entry.
+ * @param priority Task priority (TASK_PRIORITY_NORM is default).
+ *
+ * @return NULL on allocation failure.
+ */
+task_t *task_create_user(
+        const char *name,
+        void (*entry)(void),
+        uint8_t priority);
 
 /*
  * @brief Delete a task and free its resources. Frees the task's kernel stack

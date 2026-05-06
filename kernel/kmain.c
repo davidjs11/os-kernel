@@ -84,15 +84,15 @@ void kmalloc_test(void) {
         kfree(ptrs[i]);
     kprintf("[kmalloc_test] 64 small frees OK\n");
 
-    /* two consecutive page-sized allocs — this is what task_create does */
+    /* two consecutive page-sized allocs — this is what task_create_kernel does */
     void *s1 = kmalloc(sizeof(task_t));
     kprintf("[kmalloc_test] task_t sized: %p\n", s1);
     void *s2 = kmalloc(8192);
     kprintf("[kmalloc_test] kstack sized: %p\n", s2);
     if (!s1 || !s2)
-        kprintf("[kmalloc_test] FAIL: task_create pattern failed\n");
+        kprintf("[kmalloc_test] FAIL: task_create_kernel pattern failed\n");
     else
-        kprintf("[kmalloc_test] task_create pattern OK\n");
+        kprintf("[kmalloc_test] task_create_kernel pattern OK\n");
     kfree(s1);
     kfree(s2);
 
@@ -119,8 +119,8 @@ void context_test(void) {
 
 void task_test(void) {
     // creation
-    task_t *a = task_create("task_a", NULL, TASK_PRIORITY_NORM, NULL, NULL);
-    task_t *b = task_create("task_b", NULL, TASK_PRIORITY_NORM, NULL, a);
+    task_t *a = task_create_kernel("task_a", NULL, TASK_PRIORITY_NORM);
+    task_t *b = task_create_kernel("task_b", NULL, TASK_PRIORITY_NORM);
 
     kprintf("a: pid=%d name=%s parent=%p\n", a->pid, a->name, a->parent);
     kprintf("b: pid=%d name=%s parent=%p\n", b->pid, b->name, b->parent);
@@ -207,9 +207,9 @@ static void task_d_rr(void) {
 }
 
 void sched_test(void) {
-    task_t *a = task_create("task_a", task_a_sched, TASK_PRIORITY_NORM, NULL, NULL);
+    task_t *a = task_create_kernel("task_a", task_a_sched, TASK_PRIORITY_NORM);
     kprintf("[sched_test] task_a created\n");
-    task_t *b = task_create("task_b", task_b_sched, TASK_PRIORITY_NORM, NULL, NULL);
+    task_t *b = task_create_kernel("task_b", task_b_sched, TASK_PRIORITY_NORM);
     kprintf("[sched_test] task_b created\n");
 
     /* Test 1: basic enqueue and yield between two tasks. */
@@ -254,6 +254,15 @@ void irq0_handler(uint8_t irq) {
     sched_tick();
 }
 
+static void __attribute__((naked)) user_entry(void) {
+    __asm__ volatile (
+        "movq $0,    %%rax\n"       /* SYS_EXIT         */
+        "movq $0,    %%rdi\n"       /* code = 0         */
+        "syscall\n"
+        :::
+    );
+}
+
 /*
  * @brief Kernel entry point.
  */
@@ -274,19 +283,21 @@ void kmain(void)
     // task_test();
     // sched_test();
 
-    task_t *a = task_create("a", task_a_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    task_t *a = task_create_kernel("a", task_a_rr, TASK_PRIORITY_NORM);
     kprintf("task a created\n");
-    task_t *b = task_create("b", task_b_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    task_t *b = task_create_kernel("b", task_b_rr, TASK_PRIORITY_NORM);
     kprintf("task b created\n");
-    task_t *c = task_create("c", task_c_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    task_t *c = task_create_kernel("c", task_c_rr, TASK_PRIORITY_NORM);
     kprintf("task c created\n");
-    task_t *d = task_create("d", task_d_rr, TASK_PRIORITY_NORM, NULL, NULL);
+    task_t *d = task_create_kernel("d", task_d_rr, TASK_PRIORITY_NORM);
     kprintf("task d created\n");
-
     sched_enqueue(a);
     sched_enqueue(b);
     sched_enqueue(c);
     sched_enqueue(d);
+
+    task_t *user = task_create_user("user_test", user_entry, TASK_PRIORITY_NORM);
+    sched_enqueue(user);
 
     arch_interrupt_enable();
     for (;;) __asm__ ("hlt");

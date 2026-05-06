@@ -214,4 +214,7 @@ vmm_object_t *vmm_object_create_phys(paddr_t base, size_t size);
  */
 vmm_object_t *vmm_object_create_anon(void);
 
+
+/* TODO: add delete functions. */
+
 #endif /* KERNEL_API_VMM_H */

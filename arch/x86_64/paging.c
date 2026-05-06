@@ -88,21 +88,21 @@ static pte_t *pgtable_get_pte(paddr_t space, vaddr_t vaddr)
     if (!(pml4[PML4_INDEX(vaddr)] & PTE_PRESENT)) {
         new_addr = pmm_alloc();
         memset((void *) (new_addr + hhdm_offset), 0, PAGE_SIZE);
-        pml4[PML4_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE;
+        pml4[PML4_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE | PTE_USER;
     }
 
     pdpt = (pte_t *) (PTE_ADDR(pml4[PML4_INDEX(vaddr)]) + hhdm_offset);
     if (!(pdpt[PDPT_INDEX(vaddr)] & PTE_PRESENT)) {
         new_addr = pmm_alloc();
         memset((void *) (new_addr + hhdm_offset), 0, PAGE_SIZE);
-        pdpt[PDPT_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE;
+        pdpt[PDPT_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE | PTE_USER;
     }
 
     pd = (pte_t *) (PTE_ADDR(pdpt[PDPT_INDEX(vaddr)]) + hhdm_offset);
     if (!(pd[PD_INDEX(vaddr)] & PTE_PRESENT)) {
         new_addr = pmm_alloc();
         memset((void *) (new_addr + hhdm_offset), 0, PAGE_SIZE);
-        pd[PD_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE;
+        pd[PD_INDEX(vaddr)] = new_addr | PTE_PRESENT | PTE_WRITE | PTE_USER;
     }
 
     pt = (pte_t *) (PTE_ADDR(pd[PD_INDEX(vaddr)]) + hhdm_offset);

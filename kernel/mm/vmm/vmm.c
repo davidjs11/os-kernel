@@ -18,7 +18,7 @@
 extern vmm_object_ops_t object_ops_anon;
 extern vmm_object_ops_t object_ops_phys;
 
-static vmm_space_t  kernel_space;
+vmm_space_t  kernel_space;
 static vmm_object_t kernel_objects[VMM_STATIC_OBJECTS_MAX];
 static vmm_region_t kernel_regions[VMM_STATIC_REGIONS_MAX];
 static vmm_space_t *current_space = NULL;
@@ -59,6 +59,8 @@ static void vmm_kernel_space_init(void)
         .phys.base = 0x0,
         .phys.size = platform_mem_get_size(),
     };
+
+    vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_HHDM]);
     
     /* Kernel heap. */
     kernel_regions[KERNEL_REGION_KERNEL_HEAP] = (vmm_region_t) {
@@ -67,7 +69,7 @@ static void vmm_kernel_space_init(void)
         .object = &kernel_objects[KERNEL_REGION_KERNEL_HEAP],
         .offset = 0,
         .size   = KERNEL_LAYOUT_HEAP_SIZE,
-        .prot   = PROT_READ | PROT_WRITE,
+        .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_USER,
     };
 
     list_init(&kernel_regions[KERNEL_REGION_KERNEL_HEAP].node);
@@ -79,30 +81,6 @@ static void vmm_kernel_space_init(void)
     kernel_objects[KERNEL_REGION_KERNEL_HEAP] = (vmm_object_t) {
         .refcount  = 1,
         .ops       = &object_ops_anon,
-    };
-
-    /* Kernel image. */
-    /* TODO: Split into .text, .data/.bss and .rodata */
-    kernel_regions[KERNEL_REGION_KERNEL_CODE] = (vmm_region_t) {
-        .addr   = platform_mem_get_kernel_image_vaddr(),
-        .space  = &kernel_space,
-        .object = &kernel_objects[KERNEL_REGION_KERNEL_CODE],
-        .offset = 0,
-        .size   = platform_mem_get_kernel_image_size(),
-        .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_PRESENT,
-    };
-
-    list_init(&kernel_regions[KERNEL_REGION_KERNEL_CODE].node);
-    list_push_back(
-        &kernel_space.regions,
-        &kernel_regions[KERNEL_REGION_KERNEL_CODE].node
-    );
-
-    kernel_objects[KERNEL_REGION_KERNEL_CODE] = (vmm_object_t) {
-        .refcount  = 1,
-        .ops       = &object_ops_phys,
-        .phys.base = platform_mem_get_kernel_image_paddr(),
-        .phys.size = platform_mem_get_kernel_image_size(),
     };
 
     /* Pre-allocate a piece of heap to avoid initial stack overflow. */
@@ -117,6 +95,37 @@ static void vmm_kernel_space_init(void)
             PROT_READ | PROT_WRITE | PROT_PRESENT
         );
     }
+
+    /* Kernel image. */
+    /* TODO: Split into .text, .data/.bss and .rodata */
+    kernel_regions[KERNEL_REGION_KERNEL_CODE] = (vmm_region_t) {
+        .addr   = platform_mem_get_kernel_image_vaddr(),
+        .space  = &kernel_space,
+        .object = &kernel_objects[KERNEL_REGION_KERNEL_CODE],
+        .offset = 0,
+        .size   = platform_mem_get_kernel_image_size(),
+        .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_PRESENT | PROT_USER,
+    };
+
+    /* 
+     * TODO: When implementing ELF loader of executables, delete PROT_USER flag
+     * from kernel region.
+     */
+
+    list_init(&kernel_regions[KERNEL_REGION_KERNEL_CODE].node);
+    list_push_back(
+        &kernel_space.regions,
+        &kernel_regions[KERNEL_REGION_KERNEL_CODE].node
+    );
+
+    kernel_objects[KERNEL_REGION_KERNEL_CODE] = (vmm_object_t) {
+        .refcount  = 1,
+        .ops       = &object_ops_phys,
+        .phys.base = platform_mem_get_kernel_image_paddr(),
+        .phys.size = platform_mem_get_kernel_image_size(),
+    };
+
+    vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_KERNEL_CODE]);
 }
 
 void vmm_init(void)
@@ -125,7 +134,6 @@ void vmm_init(void)
     vmm_kernel_space_init();
 
     /* Map HHDM and kernel image regions. */
-    vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_HHDM]);
     vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_KERNEL_CODE]);
 
     /* Switch to new address space. */

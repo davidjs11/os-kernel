@@ -6,15 +6,6 @@
 #include <kernel/sched.h>
 #include <kernel/libc/string.h>
 
-/*
- * Safety net for tasks that return from their entry function instead of
- * calling sched_exit() explicitly. Pushed below the entry point by so a bare
- * return lands here rather than jumping to garbage.
- */
-static void sched_exit_trampoline(void) {
-    sched_exit(0);
-}
-
 void arch_context_init(
     cpu_context_t *ctx,
     uintptr_t entry,

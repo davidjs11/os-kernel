@@ -1,25 +1,13 @@
 #   Makefile   #
 
-ARCH					?= x86_64
-PLATFORM				?= pc
-BUILD					?= ./build
-TARGET					?= $(BUILD)/kernel.elf
-IMAGE					?= kernel.iso
-
-# Check required tools.
-REQUIRED_TOOLS = $(CC) $(AS) $(LD) xorriso $(QEMU)
-$(foreach tool,$(REQUIRED_TOOLS),\
-    $(if $(shell command -v $(tool) 2>/dev/null),,\
-        $(error Required tool '$(tool)' not found in PATH)))
+# Build-system configuration file
+include config.mk
 
 all: $(IMAGE)
 
 # Architecture and platform specific macros.
 include arch/$(ARCH)/arch.mk
 include arch/$(ARCH)/platform/$(PLATFORM)/platform.mk
-
-# Build-system configuration file
-include config.mk
 
 # Input source files and output object files.
 SUBDIRS					= arch/$(ARCH)                      \
@@ -30,7 +18,9 @@ SUBDIRS					= arch/$(ARCH)                      \
 SOURCES_C				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 SOURCES_ASM				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.S))
 INCLUDE					= -Iinclude -Iarch/$(ARCH)/include
-OBJECTS					= $(addprefix $(BUILD)/,$(SOURCES_C:.c=.c.o) $(SOURCES_ASM:.S=.S.o))
+OBJECTS					= $(addprefix $(BUILD)/,            \
+						      $(SOURCES_C:.c=.c.$(ARCH).o)  \
+							  $(SOURCES_ASM:.S=.S.$(ARCH).o))
 PLATFORM_LD				= arch/$(ARCH)/platform/$(PLATFORM)/linker.ld
 
 # Header dependencies.
@@ -62,13 +52,13 @@ else
 endif
 
 # C source files.
-$(BUILD)/%.c.o: %.c
+$(BUILD)/%.c.$(ARCH).o: %.c
 	@mkdir -p $(dir $@)
 	@echo "CC - $<"
 	@$(CC) $(CFLAGS) -c $< -o $@ $(INCLUDE)
 
 # Assembly source files.
-$(BUILD)/%.S.o: %.S
+$(BUILD)/%.S.$(ARCH).o: %.S
 	@mkdir -p $(dir $@)
 	@echo "AS - $<"
 	@$(AS) $(ASFLAGS) -c $< -o $@ $(INCLUDE)
@@ -89,7 +79,7 @@ external/limine/limine:
 .PHONY: clean
 clean:
 	@echo "Cleaning build directory..."
-	@rm -rf $(BUILD) $(TARGET) $(IMAGE)
+	@rm -rf $(BUILD) $(TARGET) $(IMAGE) *.elf *.iso *.img
 
 .PHONY: clean-all
 clean-all: clean
@@ -100,6 +90,7 @@ clean-all: clean
 .PHONY: help
 help:
 	@echo "Available architectures:"
-	@echo "    - x86_64"
+	@echo "    - x86_64 (Intel 64)."
+	@echo "    - aarch64 (ARMv8)."
 	@echo "Type \`make help-<arch>\` for listing available platforms."
 	@echo

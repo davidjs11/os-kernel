@@ -182,7 +182,7 @@ void vmm_handle_page_fault(
     vmm_region_t *region = vmm_space_find_region(current_space, addr);
     if (region == NULL) {
         /* TODO: Segfault. */
-        for (;;) __asm__ volatile("hlt");
+        for (;;);
     }
 
     /* TODO: Compare permissions against region. */

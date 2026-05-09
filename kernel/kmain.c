@@ -269,14 +269,15 @@
 void kmain(void)
 {
     arch_init();
-    pmm_init(NULL);
-    kprintf("[!] Initialized PMM.\n");
-    vmm_init();
-    kprintf("[!] Initialized VMM.\n");
-    sched_init(NULL);
-    kprintf("[!] Initialized scheduler.\n");
+    kprintf("[!] Initialized arch.\n");
+    // pmm_init(NULL);
+    // kprintf("[!] Initialized PMM.\n");
+    // vmm_init();
+    // kprintf("[!] Initialized VMM.\n");
+    // sched_init(NULL);
+    // kprintf("[!] Initialized scheduler.\n");
     platform_init();
-    ktimer_init(100);
+    // ktimer_init(100);
 
     // kmalloc_test();
     // context_test();
@@ -299,8 +300,7 @@ void kmain(void)
     // task_t *user = task_create_user("user_test", user_entry, TASK_PRIORITY_NORM);
     // sched_enqueue(user);
 
-    // arch_interrupt_enable();
-    // for (;;) __asm__ ("hlt");
+    arch_interrupt_enable();
     for (;;);
 }
 

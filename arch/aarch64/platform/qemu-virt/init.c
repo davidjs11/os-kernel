@@ -6,8 +6,9 @@
 #include <kernel/platform/irq.h>
 #include <kernel/platform/timer.h>
 #include <kernel/ktimer.h>
+#include "gic.h"
 
 void platform_init(void)
 {
-
+    gic_init();
 }

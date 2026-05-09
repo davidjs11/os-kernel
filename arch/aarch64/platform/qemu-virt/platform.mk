@@ -21,7 +21,7 @@ $(IMAGE): $(TARGET)
 .PHONY: run
 run: $(IMAGE)
 	@$(QEMU)										  \
-		-machine virt								  \
+		-machine virt,gic-version=2                   \
 		-cpu cortex-a72								  \
 		-m 256M										  \
 		-bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
@@ -35,7 +35,7 @@ run: $(IMAGE)
 .PHONY: debug
 debug: $(IMAGE)
 	@$(QEMU)										  \
-		-machine virt								  \
+		-machine virt,gic-version=2                   \
 		-cpu cortex-a72								  \
 		-m 256M										  \
 		-bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \

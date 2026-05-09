@@ -35,12 +35,8 @@ void platform_irq_unmask(uint8_t irq);
 void platform_irq_eoi(uint8_t irq);
 
 /*
- * @brief Register an IRQ handler. This function acts as a wrapper for
- *        arch_interrupt_set_handler().
- *
- * @param irq     IRQ vector number.
- * @param handler Handler function for the IRQ.
+ * @brief Handle an IRQ.
  */
-void platform_irq_register(uint8_t irq, void (*handler)(void));
+void platform_irq_handle(void);
 
 #endif /* KERNEL_API_PLATFORM_IRQ_H */

@@ -141,6 +141,13 @@ void vmm_space_delete(vmm_space_t *space);
 void vmm_space_add_region(vmm_space_t *space, vmm_region_t *region);
 
 /*
+ * @brief Prints the list of regions of an address space.
+ *
+ * @param space  The address space to print the regions from.
+ */
+void vmm_space_print_regions(vmm_space_t *space);
+
+/*
  * @brief Switch current address space.
  *
  * @param space The address space that will be loaded.

@@ -38,13 +38,15 @@ static void vmm_kernel_space_init(void)
     kernel_space.pt_phys = arch_paging_space_create();
     list_init(&kernel_space.regions);
 
+    /* TODO: solve platform_mem_get_size() and not hardcode size. */
+
     /* HHDM region. */
     kernel_regions[KERNEL_REGION_HHDM] = (vmm_region_t) {
         .addr   = platform_mem_get_hhdm_vaddr(),
         .space  = &kernel_space,
         .object = &kernel_objects[KERNEL_REGION_HHDM],
         .offset = 0,
-        .size   = platform_mem_get_size(),
+        .size   = 0x100000000,
         .prot   = PROT_READ | PROT_WRITE | PROT_PRESENT,
     };
 
@@ -58,7 +60,7 @@ static void vmm_kernel_space_init(void)
         .refcount  = 1,
         .ops       = &object_ops_phys,
         .phys.base = 0x0,
-        .phys.size = platform_mem_get_size(),
+        .phys.size = 0x100000000,
     };
 
     vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_HHDM]);
@@ -133,6 +135,8 @@ void vmm_init(void)
 {
     arch_paging_init();
     vmm_kernel_space_init();
+    vmm_space_print_regions(&kernel_space);
+
     kprintf("[vmm] Initialized kernel address space.\n");
 
     /* Map HHDM and kernel image regions. */
@@ -181,6 +185,21 @@ vmm_region_t *vmm_space_find_region(vmm_space_t *space, vaddr_t addr)
     }
 
     return NULL;
+}
+
+void vmm_space_print_regions(vmm_space_t *space)
+{
+    kprintf("Regions of the address space located at 0x%x:\n", space->pt_phys);
+
+    list_foreach(region_node, &space->regions) {
+        vmm_region_t *region = VMM_REGION_LIST_NODE(region_node);
+        kprintf(
+            " - 0x%x - 0x%x (size: %d bytes)\n",
+            region->addr,
+            region->addr + region->size,
+            region->size
+        );
+    }
 }
 
 void vmm_handle_page_fault(

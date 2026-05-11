@@ -181,30 +181,78 @@ static void task_b_sched(void) {
 }
 
 static void task_a_rr(void) {
+    uint64_t width = framebuffer_get_width();
+    uint64_t y_start = 0 * framebuffer_get_height() / 4;
+    uint64_t y_end = 1 * framebuffer_get_height() / 4;
+    uint32_t color = 0xffff0000;
+
     for (;;) {
-        kprintf("A");
-        for (volatile int i = 0; i < 1000000; i++);
+        for (uint64_t x = 0; x < width; x++) {
+            for (uint64_t y = y_start; y < y_end; y++) {
+                framebuffer_set_pixel(x, y, color);
+            }
+            kprintf("A");
+            for (volatile int i = 0; i < 500000; i++);
+        }
+
+        for (volatile int i = 0; i < 500000; i++);
     }
 }
 
 static void task_b_rr(void) {
+    uint64_t width = framebuffer_get_width();
+    uint64_t y_start = 1 * framebuffer_get_height() / 4;
+    uint64_t y_end = 2 * framebuffer_get_height() / 4;
+    uint32_t color = 0xff00ff00;
+
     for (;;) {
-        kprintf("B");
+        for (uint64_t x = 0; x < width; x++) {
+            for (uint64_t y = y_start; y < y_end; y++) {
+                framebuffer_set_pixel(x, y, color);
+            }
+            kprintf("B");
+            for (volatile int i = 0; i < 800000; i++);
+        }
+
         for (volatile int i = 0; i < 500000; i++);
     }
 }
 
 static void task_c_rr(void) {
+    uint64_t width = framebuffer_get_width();
+    uint64_t y_start = 2 * framebuffer_get_height() / 4;
+    uint64_t y_end = 3 * framebuffer_get_height() / 4;
+    uint32_t color = 0xff0000ff;
+
     for (;;) {
-        kprintf("C");
-        for (volatile int i = 0; i < 100000; i++);
+        for (uint64_t x = 0; x < width; x++) {
+            for (uint64_t y = y_start; y < y_end; y++) {
+                framebuffer_set_pixel(x, y, color);
+            }
+            kprintf("C");
+            for (volatile int i = 0; i < 1100000; i++);
+        }
+
+        for (volatile int i = 0; i < 500000; i++);
     }
 }
 
 static void task_d_rr(void) {
+    uint64_t width = framebuffer_get_width();
+    uint64_t y_start = 3 * framebuffer_get_height() / 4;
+    uint64_t y_end = framebuffer_get_height();
+    uint32_t color = 0xffffff00;
+
     for (;;) {
-        kprintf("D");
-        for (volatile int i = 0; i < 1000000; i++);
+        for (uint64_t x = 0; x < width; x++) {
+            for (uint64_t y = y_start; y < y_end; y++) {
+                framebuffer_set_pixel(x, y, color);
+            }
+            kprintf("D");
+            for (volatile int i = 0; i < 300000; i++);
+        }
+
+        for (volatile int i = 0; i < 500000; i++);
     }
 }
 
@@ -272,11 +320,6 @@ void kmain(void)
     arch_init();
     platform_init();
     pmm_init(NULL);
-
-    /* 0xffff8000fd000000 */
-    for (uint64_t x = 0; x < framebuffer_get_width(); x++)
-        for (uint64_t y = 0; y < framebuffer_get_height(); y++)
-            framebuffer_set_pixel(x, y, 0xffff0000);
 
 #ifdef ARCH_X86_64
     vmm_init();

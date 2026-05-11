@@ -14,18 +14,30 @@ SUBDIRS					= arch/$(ARCH)                      \
 						  arch/$(ARCH)/platform/$(PLATFORM) \
 						  kernel                            \
 						  kernel/*   		                \
-						  kernel/**/*
+						  kernel/**/*		                \
+						  device/*   		                \
+						  device/**/*
 SOURCES_C				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
 SOURCES_ASM				= $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.S))
 INCLUDE					= -Iinclude -Iarch/$(ARCH)/include
 OBJECTS					= $(addprefix $(BUILD)/,            \
-						      $(SOURCES_C:.c=.c.$(ARCH).o)  \
-							  $(SOURCES_ASM:.S=.S.$(ARCH).o))
+						  $(SOURCES_C:.c=.c.$(ARCH).o)  \
+						  $(SOURCES_ASM:.S=.S.$(ARCH).o))
 PLATFORM_LD				= arch/$(ARCH)/platform/$(PLATFORM)/linker.ld
 
 # Header dependencies.
 DEPENDENCIES			= $(OBJECTS:.o=.d)
 -include $(DEPENDENCIES)
+
+# Convert ARCH to compiler definition.
+
+ifeq ($(ARCH),x86_64)
+	ARCH_DEFINE := ARCH_X86_64
+else ifeq ($(ARCH),aarch64)
+	ARCH_DEFINE := ARCH_AARCH64
+else
+	$(error Unsupported ARCH '$(ARCH)'; use x86_64 or aarch64)
+endif
 
 # Target-independent flags.
 CFLAGS					+=	\
@@ -37,6 +49,7 @@ CFLAGS					+=	\
 	-std=c99				\
 	-MMD					\
 	-MP						\
+	-D$(ARCH_DEFINE)
 
 # Debug-only flags.
 ifdef DEBUG

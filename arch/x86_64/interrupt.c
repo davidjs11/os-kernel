@@ -119,18 +119,3 @@ void arch_interrupt_disable(void)
 {
     __asm__ volatile ("cli" ::: "memory");
 }
-
-/* Interrupt Service Routines. */
-static void (*isr_handlers[IDT_NUM_VECTORS])(interrupt_frame_t *frame);
-
-void isr_set_handler(uint8_t vector, void (*handler)(interrupt_frame_t *frame))
-{
-    isr_handlers[vector] = handler;
-}
-
-void isr_common_handler(interrupt_frame_t *frame)
-{
-    if (isr_handlers[frame->vector] != NULL) {
-        isr_handlers[frame->vector](frame);
-    }
-}

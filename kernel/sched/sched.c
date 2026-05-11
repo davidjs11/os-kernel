@@ -45,9 +45,11 @@ void sched_init(sched_ops_t *ops)
     }
 
     sched_ops->init();
+    kprintf("[sched] Initialized scheduler.\n");
 
     idle = task_create_kernel("idle", idle_function, TASK_PRIORITY_MIN);
     idle->state = TASK_RUNNING;
+    kprintf("[sched] Created idle task.\n");
 
     /* As sched_init is called from kmain, current task is NULL. */
     current = NULL;

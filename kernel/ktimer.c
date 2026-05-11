@@ -3,7 +3,7 @@
 /* Kernel printf function implementation. */
 
 #include <kernel/ktimer.h>
-#include <kernel/irq.h>
+#include <kernel/device/irq/irq.h>
 #include <kernel/platform/timer.h>
 #include <kernel/kprintf.h>
 #include <kernel/sched.h>
@@ -24,6 +24,7 @@ void ktimer_init(uint32_t _freq)
     irq_unmask(0);
     freq  = _freq;
     ticks = 0;
+    kprintf("[ktimer] Initialized kernel timer.\n");
 }
 
 uint64_t ktimer_ticks(void)

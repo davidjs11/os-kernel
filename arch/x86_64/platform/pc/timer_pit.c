@@ -10,7 +10,6 @@
 #include <kernel/platform/timer.h>
 #include <kernel/platform/irq.h>
 #include <kernel/ktimer.h>
-#include "pic.h"
 #include "../io.h"
 
 #define PIT_CHANNEL0    0x40

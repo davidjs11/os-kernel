@@ -5,12 +5,14 @@
 #include <kernel/platform/mem.h>
 #include <kernel/arch/paging.h>
 #include <kernel/pmm.h>
+#include <kernel/kprintf.h>
 
 static pmm_ops_t *pmm_ops = PMM_OPS_DEFAULT;
 
 void pmm_init(pmm_ops_t *ops)
 {
     mmap_entry_t *mmap = platform_mem_get_mmap();
+    kprintf("[pmm] Obtained system memory map.\n");
 
     /* Initialize PMM algorithm. */
     if (ops != NULL) {
@@ -31,6 +33,10 @@ void pmm_init(pmm_ops_t *ops)
             pmm_ops->free(page);
         }
     }
+    kprintf(
+        "[pmm] Built free frame list. Frames available: %d\n",
+        pmm_available()
+    );
 }
 
 paddr_t pmm_alloc(void)

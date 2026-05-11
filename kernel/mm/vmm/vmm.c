@@ -5,6 +5,7 @@
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
 #include <kernel/kheap.h>
+#include <kernel/kprintf.h>
 #include <kernel/arch/paging.h>
 #include <kernel/platform/mem.h>
 #include "vmm_layout.h"
@@ -132,9 +133,14 @@ void vmm_init(void)
 {
     arch_paging_init();
     vmm_kernel_space_init();
+    kprintf("[vmm] Initialized kernel address space.\n");
 
     /* Map HHDM and kernel image regions. */
     vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_KERNEL_CODE]);
+    kprintf(
+        "[vmm] Mapped HHDM and kernel image to 0x%x.\n",
+        kernel_regions[KERNEL_REGION_KERNEL_CODE].addr
+    );
 
     /* Switch to new address space. */
     vmm_space_switch(&kernel_space);
@@ -143,6 +149,11 @@ void vmm_init(void)
         kernel_regions[KERNEL_REGION_KERNEL_HEAP].addr,
         kernel_regions[KERNEL_REGION_KERNEL_HEAP].size,
         NULL
+    );
+
+    kprintf(
+        "[vmm] Initialized kernel heap at 0x%x.\n",
+        kernel_regions[KERNEL_REGION_KERNEL_HEAP].addr
     );
 }
 

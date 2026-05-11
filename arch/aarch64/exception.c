@@ -5,6 +5,7 @@
 #include "exception.h"
 #include <kernel/kprintf.h>
 #include <kernel/platform/irq.h>
+#include <kernel/device/irq/irq.h>
 
 /* Sync exception. */
 void exception_handler_sync(exception_frame_t *frame)
@@ -22,8 +23,10 @@ void exception_handler_sync(exception_frame_t *frame)
 /* IRQ exception. */
 void exception_handler_irq(exception_frame_t *frame)
 {
-    platform_irq_handle();
     kprintf("[!] IRQ exception!\n");
+    uint32_t irq = irq_ack();
+    irq_handle(irq);
+    irq_eoi(irq);
 }
 
 /* FIQ exception. */

@@ -2,7 +2,6 @@
 
 /* Platform-specific serial port API implementation for qemu-virt board. */
 
-#include <kernel/platform/serial.h>
 #include <stdint.h>
 #include <stdbool.h>
 

@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <kernel/arch/interrupt.h>
 #include <kernel/platform/timer.h>
-#include <kernel/platform/irq.h>
 #include <kernel/ktimer.h>
 #include "../io.h"
 

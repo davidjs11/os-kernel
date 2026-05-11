@@ -4,9 +4,7 @@
 
 #include <kernel/device/irq/irq.h>
 #include <kernel/device/irq/i8259.h>
-
 #include <stdint.h>
-#include <kernel/platform/irq.h>
 #include <kernel/arch/interrupt.h>
 #include <kernel/kprintf.h>
 

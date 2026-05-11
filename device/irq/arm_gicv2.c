@@ -6,7 +6,6 @@
 #include <kernel/device/irq/arm_gicv2.h>
 
 #include <stdint.h>
-#include <kernel/platform/irq.h>
 #include <kernel/arch/interrupt.h>
 #include <kernel/kprintf.h>
 

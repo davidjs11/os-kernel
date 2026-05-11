@@ -4,7 +4,6 @@
 
 #include "exception.h"
 #include <kernel/kprintf.h>
-#include <kernel/platform/irq.h>
 #include <kernel/device/irq/irq.h>
 
 /* Sync exception. */

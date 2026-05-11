@@ -29,6 +29,14 @@ volatile struct limine_executable_address_request
         .revision = 0,
 };
 
+/* Limine framebuffer request. */
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_framebuffer_request
+    limine_framebuffer_request = {
+        .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
+        .revision = 0,
+};
+
 /* Kernel's own copy of the memory map. */
 #define MMAP_ENTRIES_MAX 64
 static mmap_entry_t mmap_entry[MMAP_ENTRIES_MAX];
@@ -37,6 +45,7 @@ static size_t mem_size;
 static uint64_t hhdm_offset;
 static paddr_t kernel_paddr;
 static vaddr_t kernel_vaddr;
+static void *framebuffer;
 extern char _kernel_image_start[];
 extern char _kernel_image_end[];
 bool limine_parsed = false;
@@ -118,6 +127,15 @@ static void parse_limine_requests()
     kernel_vaddr = limine_executable_address_request.response->virtual_base;
     kernel_paddr = limine_executable_address_request.response->physical_base;
 
+    /* Framebuffer request. */
+    struct limine_framebuffer_response *framebuffer_response =
+        limine_framebuffer_request.response;
+
+    /* For the moment we will take only the first framebuffer. */
+    if (framebuffer_response->framebuffer_count > 0) {
+        framebuffer = framebuffer_response->framebuffers[0];
+    }
+
 done:
     if (panic) {
         /* TODO: Panic here. */
@@ -187,4 +205,14 @@ uint64_t platform_mem_get_kernel_image_paddr(void)
 size_t platform_mem_get_kernel_image_size(void)
 {
     return (size_t)((vaddr_t) _kernel_image_end - (vaddr_t) _kernel_image_start);
+}
+
+void *platform_mem_get_framebuffer_base(void)
+{
+    if (!limine_parsed) {
+        parse_limine_requests();
+        limine_parsed = true;
+    }
+
+    return framebuffer;
 }

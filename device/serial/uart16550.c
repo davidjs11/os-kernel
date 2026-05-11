@@ -1,6 +1,6 @@
 /*   device/serial/uart16550.c   */
 
-/* uart16550 UART driver implementation. */
+/* UART16550 UART driver implementation. */
 
 #include <kernel/device/serial/serial.h>
 

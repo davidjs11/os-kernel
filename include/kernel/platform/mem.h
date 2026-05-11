@@ -76,4 +76,11 @@ vaddr_t platform_mem_get_kernel_image_vaddr(void);
  */
 size_t platform_mem_get_kernel_image_size(void);
 
+/*
+ * @brief Get the frame buffer memory.
+ *
+ * @return Pointer to the base address of the framebuffer memory.
+ */
+void *platform_mem_get_framebuffer_base(void);
+
 #endif /* KERNEL_API_PLATFORM_MEM_H */

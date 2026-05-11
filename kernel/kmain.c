@@ -16,6 +16,7 @@
 #include <kernel/sched.h>
 #include <kernel/ktimer.h>
 #include <kernel/device/serial/serial.h>
+#include <kernel/device/framebuffer/framebuffer.h>
 
 #ifdef ARCH_X86_64
 
@@ -271,6 +272,11 @@ void kmain(void)
     arch_init();
     platform_init();
     pmm_init(NULL);
+
+    /* 0xffff8000fd000000 */
+    for (uint64_t x = 0; x < framebuffer_get_width(); x++)
+        for (uint64_t y = 0; y < framebuffer_get_height(); y++)
+            framebuffer_set_pixel(x, y, 0xffff0000);
 
 #ifdef ARCH_X86_64
     vmm_init();

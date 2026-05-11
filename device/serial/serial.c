@@ -9,12 +9,12 @@ static serial_device_t *serial_devs[SERIAL_MAX_DEVICES];
 static serial_handle_t serial_count = 0;
 
 /* Default console serial port handle. */
-static serial_handle_t serial_console = -1;
+static serial_handle_t serial_console = SERIAL_MAX_DEVICES;
 
 serial_handle_t serial_register(serial_device_t *dev)
 {
     if (serial_count >= SERIAL_MAX_DEVICES) {
-        return -1; /* Invalid handle. */
+        return SERIAL_MAX_DEVICES; /* Invalid handle. */
     }
 
     serial_devs[serial_count] = dev;
@@ -25,6 +25,15 @@ void serial_set_console_handle(serial_handle_t serial_handle)
 {
     if (serial_handle >= 0 && serial_handle < serial_count) {
         serial_console = serial_handle;
+    }
+}
+
+void serial_init(serial_handle_t serial_handle)
+{
+    if (serial_handle >= 0 && serial_handle < serial_count) {
+        serial_devs[serial_handle]->init(
+            serial_devs[serial_handle]->data
+        );
     }
 }
 

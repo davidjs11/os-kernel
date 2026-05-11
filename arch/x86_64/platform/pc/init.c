@@ -4,12 +4,15 @@
 
 #include <kernel/platform/init.h>
 #include <kernel/platform/timer.h>
+#include <kernel/platform/mem.h>
 #include <kernel/ktimer.h>
 #include <kernel/kprintf.h>
 #include <kernel/device/irq/irq.h>
 #include <kernel/device/irq/i8259.h>
 #include <kernel/device/serial/serial.h>
 #include <kernel/device/serial/uart16550.h>
+#include <kernel/device/framebuffer/framebuffer.h>
+#include <kernel/device/framebuffer/limine_framebuffer.h>
 
 #define SERIAL_COM1_PORT 0x3F8
 
@@ -17,9 +20,18 @@ void platform_init(void)
 {
     /* Serial port. */
     serial_device_t *uart16550_device = uart16550_register(SERIAL_COM1_PORT);
-    serial_handle_t handle = serial_register(uart16550_device);
-    serial_set_console_handle(handle);
+    serial_handle_t serial_handle = serial_register(uart16550_device);
+    serial_set_console_handle(serial_handle);
     kprintf("[pc] Initialized UART16550 serial port.\n");
+
+    /* Framebuffer. */
+    framebuffer_device_t *framebuffer_device = limine_framebuffer_register(
+        platform_mem_get_framebuffer_base()
+    );
+    framebuffer_handle_t fb_handle = framebuffer_register(framebuffer_device);
+    framebuffer_init(fb_handle);
+    framebuffer_set_default_handle(fb_handle);
+    kprintf("[pc] Initialized framebuffer.\n");
 
     /* Initialize interrupt controller. */
     irq_register(&irq_device_i8259);

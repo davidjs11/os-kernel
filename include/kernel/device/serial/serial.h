@@ -28,7 +28,7 @@ typedef struct serial_device {
  *
  * @param dev Device to register as the serial device.
  *
- * @return A handler for the new registered serial.
+ * @return A handle for the new registered serial.
  */
 serial_handle_t serial_register(serial_device_t *dev);
 
@@ -38,6 +38,13 @@ serial_handle_t serial_register(serial_device_t *dev);
  * @param dev Device to register as the serial device.
  */
 void serial_set_console_handle(serial_handle_t h);
+
+/*
+ * @brief Initialize a serial device.
+ *
+ * @param serial_handle Handle of the serial device to initialize.
+ */
+void serial_init(serial_handle_t serial_handle);
 
 /*
  * @brief Output a character through the default console.

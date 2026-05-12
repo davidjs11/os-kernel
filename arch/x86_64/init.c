@@ -21,7 +21,7 @@ void arch_init(void)
     isr_set_handler(IDT_ENTRY_GPF, exception_gpf_handler);
 
     /* Set IRQ common handler for all IRQs. */
-    for (size_t i = 0x20; i < 0x2f; i++) {
+    for (size_t i = 0x20; i < 0x30; i++) {
         isr_set_handler(i, irq_common_handler);
     }
 

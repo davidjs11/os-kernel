@@ -5,6 +5,7 @@
 #include "exception.h"
 #include <kernel/kprintf.h>
 #include <kernel/device/irq/irq.h>
+#include <kernel/interrupt.h>
 
 /* Sync exception. */
 void exception_handler_sync(exception_frame_t *frame)

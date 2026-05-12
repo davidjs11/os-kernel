@@ -4,6 +4,7 @@
 
 #include <kernel/ktimer.h>
 #include <kernel/device/irq/irq.h>
+#include <kernel/interrupt.h>
 #include <kernel/platform/timer.h>
 #include <kernel/kprintf.h>
 #include <kernel/sched.h>

@@ -4,6 +4,7 @@
 
 #include "handlers.h"
 #include <kernel/device/irq/irq.h>
+#include <kernel/interrupt.h>
 
 /* Interrupt Service Routines. */
 static void (*isr_handlers[IDT_NUM_VECTORS])(interrupt_frame_t *frame);

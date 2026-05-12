@@ -3,12 +3,12 @@
 /* Platform-specific initialization code implementation for x86_64/pc. */
 
 #include <kernel/platform/init.h>
-#include <kernel/platform/timer.h>
 #include <kernel/platform/mem.h>
-#include <kernel/ktimer.h>
 #include <kernel/kprintf.h>
 #include <kernel/device/irq/irq.h>
 #include <kernel/device/irq/i8259.h>
+#include <kernel/device/timer/timer.h>
+#include <kernel/device/timer/pit.h>
 #include <kernel/device/serial/serial.h>
 #include <kernel/device/serial/uart16550.h>
 #include <kernel/device/framebuffer/framebuffer.h>
@@ -37,4 +37,8 @@ void platform_init(void)
     irq_register(&irq_device_i8259);
     irq_init();
     kprintf("[pc] Initialized Intel 8259 PIC.\n");
+
+    /* Timer. */
+    timer_register(&timer_device_pit);
+    kprintf("[pc] Registered Intel 8254 PIT.\n");
 }

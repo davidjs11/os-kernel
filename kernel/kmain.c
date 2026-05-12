@@ -6,7 +6,6 @@
 #include <kernel/arch/paging.h>
 #include <kernel/arch/interrupt.h>
 #include <kernel/platform/init.h>
-#include <kernel/platform/timer.h>
 #include <kernel/pmm.h>
 #include <kernel/vmm.h>
 #include <kernel/list.h>

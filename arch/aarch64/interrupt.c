@@ -8,13 +8,8 @@
 
 static inline void interrupts_enable(void)
 {
-    /* Clear IRQ mask bit. */
+    /* Clear IRQ and FIQ mask bits. */
     __asm__ volatile ("msr daifclr, #3");
-}
-
-void arch_interrupt_init(void)
-{
-
 }
 
 void arch_interrupt_enable(void)
@@ -24,5 +19,6 @@ void arch_interrupt_enable(void)
 
 void arch_interrupt_disable(void)
 {
-
+    /* Set IRQ and FIQ mask bits. */
+    __asm__ volatile ("msr daifset, #3");
 }

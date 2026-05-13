@@ -94,13 +94,6 @@ static int pl011_ready(void *data)
     return !(*pl011_reg(config->base, PL011_FR) & PL011_FR_TXFF);
 }
 
-static serial_device_t pl011_dev = {
-    .init  = pl011_init,
-    .putc  = pl011_putc,
-    .getc  = pl011_getc,
-    .ready = pl011_ready,
-};
-
 serial_device_t *pl011_register(uint64_t pl011_base)
 {
     if (pl011_pool_used >= PL011_MAX_INSTANCES) {

@@ -90,13 +90,6 @@ static int uart16550_ready(void *data)
     return !!(inb(port + UART_LSR) & UART_LSR_THRE);
 }
 
-static serial_device_t uart16550_dev = {
-    .init  = uart16550_init,
-    .putc  = uart16550_putc,
-    .getc  = uart16550_getc,
-    .ready = uart16550_ready,
-};
-
 serial_device_t *uart16550_register(uint16_t port)
 {
     if (uart16550_pool_used >= UART16550_MAX_INSTANCES) {

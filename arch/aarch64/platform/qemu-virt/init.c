@@ -21,6 +21,7 @@ void platform_init(void)
     serial_device_t *pl011_device = pl011_register(PL011_BASE);
     serial_handle_t handle = serial_register(pl011_device);
     serial_set_console_handle(handle);
+    serial_init(handle);
     kprintf("[qemu-virt] Initialized PL011 UART.\n");
 
     /* Initialize interrupt controller. */

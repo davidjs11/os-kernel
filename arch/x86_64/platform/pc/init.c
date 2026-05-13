@@ -22,6 +22,7 @@ void platform_init(void)
     serial_device_t *uart16550_device = uart16550_register(SERIAL_COM1_PORT);
     serial_handle_t serial_handle = serial_register(uart16550_device);
     serial_set_console_handle(serial_handle);
+    serial_init(serial_handle);
     kprintf("[pc] Initialized UART16550 serial port.\n");
 
     /* Framebuffer. */

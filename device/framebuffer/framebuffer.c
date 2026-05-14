@@ -21,7 +21,7 @@ framebuffer_handle_t framebuffer_register(framebuffer_device_t *dev)
 
 void framebuffer_init(framebuffer_handle_t fb)
 {
-    if (fb >= framebuffer_count || framebuffer_devices[fb] != NULL) {
+    if (fb >= framebuffer_count || framebuffer_devices[fb] == NULL) {
         return;
     }
 
@@ -38,6 +38,12 @@ void framebuffer_set_default_handle(framebuffer_handle_t framebuffer_handle)
     }
 }
 
+bool framebuffer_has_default(void)
+{
+    return framebuffer_default < framebuffer_count
+        && framebuffer_info[framebuffer_default] != NULL;
+}
+
 uint32_t framebuffer_get_pixel_from(
         framebuffer_handle_t fb,
         uint64_t x,
@@ -48,15 +54,16 @@ uint32_t framebuffer_get_pixel_from(
     }
 
     framebuffer_device_t *dev = framebuffer_devices[fb];
-    if (!dev->get_pixel)
+    if (dev->get_pixel == NULL) {
         return 0;
+    }
 
     return dev->get_pixel(dev->data, x, y);
 }
 
 uint32_t framebuffer_get_pixel(uint64_t x, uint64_t y)
 {
-    framebuffer_get_pixel_from(framebuffer_default, x, y);
+    return framebuffer_get_pixel_from(framebuffer_default, x, y);
 }
 
 void framebuffer_set_pixel_to(
@@ -70,8 +77,9 @@ void framebuffer_set_pixel_to(
     }
 
     framebuffer_device_t *dev = framebuffer_devices[fb];
-    if (dev->set_pixel)
+    if (dev->set_pixel != NULL) {
         dev->set_pixel(dev->data, x, y, color);
+    }
 }
 
 void framebuffer_set_pixel(uint64_t x, uint64_t y, uint32_t color)
@@ -81,28 +89,26 @@ void framebuffer_set_pixel(uint64_t x, uint64_t y, uint32_t color)
 
 uint64_t framebuffer_get_width_from(framebuffer_handle_t fb)
 {
-    if (framebuffer_info[fb] != NULL) {
+    if (fb < framebuffer_count && framebuffer_info[fb] != NULL) {
         return framebuffer_info[fb]->width;
     }
+    return 0;
 }
 
 uint64_t framebuffer_get_width(void)
 {
-    if (framebuffer_info[framebuffer_default] != NULL) {
-        return framebuffer_info[framebuffer_default]->width;
-    }
+    return framebuffer_get_width_from(framebuffer_default);
 }
 
 uint64_t framebuffer_get_height_from(framebuffer_handle_t fb)
 {
-    if (framebuffer_info[fb] != NULL) {
+    if (fb < framebuffer_count && framebuffer_info[fb] != NULL) {
         return framebuffer_info[fb]->height;
     }
+    return 0;
 }
 
 uint64_t framebuffer_get_height(void)
 {
-    if (framebuffer_info[framebuffer_default] != NULL) {
-        return framebuffer_info[framebuffer_default]->height;
-    }
+    return framebuffer_get_height_from(framebuffer_default);
 }

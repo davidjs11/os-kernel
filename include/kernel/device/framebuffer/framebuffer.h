@@ -54,6 +54,13 @@ void framebuffer_init(framebuffer_handle_t fb);
 void framebuffer_set_default_handle(framebuffer_handle_t framebuffer_handle);
 
 /*
+ * @brief Check if there is a default framebuffer available.
+ *
+ * @return true if a default framebuffer has been set.
+ */
+bool framebuffer_has_default(void);
+
+/*
  * @brief Get the color value of a certain pixel in a framebuffer.
  *
  * @param fb Framebuffer handle to get the pixel color value from.

@@ -20,8 +20,8 @@ void pmm_init(pmm_ops_t *ops)
     }
     pmm_ops->init(platform_mem_get_hhdm_vaddr());
 
-    /* Build free frame list. */
-    for (size_t i = 0; mmap[i].base != 0 && mmap[i].size != 0; i++) {
+    /* Build free frame list (map ends with an empty entry). */
+    for (size_t i = 0; mmap[i].base != 0 || mmap[i].size != 0; i++) {
         /* Skip unusable regions. */
         if (mmap[i].type != MMAP_USABLE) {
             continue;

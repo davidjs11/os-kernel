@@ -24,9 +24,9 @@ static vmm_object_t kernel_objects[VMM_STATIC_OBJECTS_MAX];
 static vmm_region_t kernel_regions[VMM_STATIC_REGIONS_MAX];
 static vmm_space_t *current_space = NULL;
 
-static void vmm_region_map(vmm_space_t *space, vmm_region_t *region) {
-    size_t page_count = PAGE_ALIGN(region->size) / PAGE_SIZE;
-    for (size_t page_addr = region->addr;
+static void vmm_region_map(vmm_space_t *space, vmm_region_t *region)
+{
+    for (vaddr_t page_addr = region->addr;
         page_addr < region->addr + region->size;
         page_addr += PAGE_SIZE) {
             region->object->ops->map(space, region, page_addr, region->prot);
@@ -37,8 +37,6 @@ static void vmm_kernel_space_init(void)
 {
     kernel_space.pt_phys = arch_paging_space_create();
     list_init(&kernel_space.regions);
-
-    /* TODO: solve platform_mem_get_size() and not hardcode size. */
 
     /* HHDM region. */
     kernel_regions[KERNEL_REGION_HHDM] = (vmm_region_t) {
@@ -72,7 +70,7 @@ static void vmm_kernel_space_init(void)
         .object = &kernel_objects[KERNEL_REGION_KERNEL_HEAP],
         .offset = 0,
         .size   = KERNEL_LAYOUT_HEAP_SIZE,
-        .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_USER,
+        .prot   = PROT_READ | PROT_WRITE | PROT_PRESENT,
     };
 
     list_init(&kernel_regions[KERNEL_REGION_KERNEL_HEAP].node);
@@ -107,13 +105,8 @@ static void vmm_kernel_space_init(void)
         .object = &kernel_objects[KERNEL_REGION_KERNEL_CODE],
         .offset = 0,
         .size   = platform_mem_get_kernel_image_size(),
-        .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_PRESENT | PROT_USER,
+        .prot   = PROT_READ | PROT_WRITE | PROT_EXEC | PROT_PRESENT,
     };
-
-    /* 
-     * TODO: When implementing ELF loader of executables, delete PROT_USER flag
-     * from kernel region.
-     */
 
     list_init(&kernel_regions[KERNEL_REGION_KERNEL_CODE].node);
     list_push_back(
@@ -139,15 +132,9 @@ void vmm_init(void)
 
     kprintf("[vmm] Initialized kernel address space.\n");
 
-    /* Map HHDM and kernel image regions. */
-    vmm_region_map(&kernel_space, &kernel_regions[KERNEL_REGION_KERNEL_CODE]);
-    kprintf(
-        "[vmm] Mapped HHDM and kernel image to 0x%x.\n",
-        kernel_regions[KERNEL_REGION_KERNEL_CODE].addr
-    );
-
     /* Switch to new address space. */
     vmm_space_switch(&kernel_space);
+    kprintf("[vmm] Page table switched.\n");
 
     kheap_init(
         kernel_regions[KERNEL_REGION_KERNEL_HEAP].addr,

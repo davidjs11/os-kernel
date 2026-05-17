@@ -13,6 +13,13 @@
 static uint64_t hhdm_offset = 0;
 
 /*
+ * Physical address of the kernel PML4. Its upper half (entries 256-511) is
+ * copied into every new address space so the kernel stays mapped after
+ * switching CR3 to a user space.
+ */
+static paddr_t kernel_pt_root = 0;
+
+/*
  * @brief Obtain the contents of the CR2 register.
  *
  * @return Value of the CR2 register (virtual address that caused a page fault).
@@ -160,7 +167,17 @@ void arch_paging_init()
 paddr_t arch_paging_space_create(void)
 {
     paddr_t space = pmm_alloc();
-    memset((void *) (space + hhdm_offset), 0, PAGE_SIZE);
+    pte_t *pml4 = (pte_t *) (space + hhdm_offset);
+    memset(pml4, 0, PAGE_SIZE);
+
+    /* Share kernel half. */
+    if (kernel_pt_root != 0) {
+        pte_t *kernel_pml4 = (pte_t *) (kernel_pt_root + hhdm_offset);
+        for (size_t i = 256; i < 512; i++) {
+            pml4[i] = kernel_pml4[i];
+        }
+    }
+
     return space;
 }
 
@@ -194,6 +211,10 @@ void arch_paging_space_delete(paddr_t space)
 
 void arch_paging_space_load(paddr_t space)
 {
+    /* First loaded space is the kernel one. */
+    if (kernel_pt_root == 0) {
+        kernel_pt_root = space;
+    }
     cr3_write(space);
 }
 

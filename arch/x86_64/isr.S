@@ -1,19 +1,7 @@
 /*   arch/x86_64/isr.S   */
 
-/* Generic ISR-handler stub. */
-.macro ISR n handler error
-.global isr_stub_\n
-isr_stub_\n:
-
-    /* Dummy error code. */
-    .ifb \error
-        pushq $0
-    .endif
-
-    /* Vector code. */
-    pushq $\n 
-
-    /* Save registers. */
+/* Save general purpose registers. */
+.macro SAVE_REGS
     pushq %rax
     pushq %rbx
     pushq %rcx
@@ -29,21 +17,10 @@ isr_stub_\n:
     pushq %r13
     pushq %r14
     pushq %r15
+.endm
 
-    /* Call handler. */
-    cld
-    mov %rsp, %rdi
-    call \handler
-
-    /* Pass current iterrupt frame RSP to sched_resched. */
-    movq %rsp, %rdi         /* RSP before call, clean interrupt frame top. */
-    call sched_resched      /* Takes rsp, returns new RSP. */
-    movq %rax, %rsp
-
-    /* Update RSP0 with top of next task's kernel stack. */
-    call tss_update_rsp0
-
-    /* Load registers. */
+/* Restore general purpose registers. */
+.macro RESTORE_REGS
     popq %r15
     popq %r14
     popq %r13
@@ -59,6 +36,59 @@ isr_stub_\n:
     popq %rcx
     popq %rbx
     popq %rax
+.endm
+
+/* Generic exception-handler stub. */
+.macro ISR n handler error
+.global isr_stub_\n
+isr_stub_\n:
+
+    /* Dummy error code. */
+    .ifb \error
+        pushq $0
+    .endif
+
+    /* Vector code. */
+    pushq $\n
+
+    SAVE_REGS
+
+    /* Call handler. */
+    cld
+    mov %rsp, %rdi
+    call \handler
+
+    RESTORE_REGS
+
+    /* Return. */
+    addq $16, %rsp
+    iretq
+.endm
+
+/*
+ * Generic IRQ-handler stub. Hardware IRQs are the only preemption points:
+ * sched_resched may switch to another task, and the interrupted task resumes
+ * from here when it's scheduled again, with its interrupt frame intact.
+ */
+.macro IRQ n handler
+.global isr_stub_\n
+isr_stub_\n:
+
+    /* Dummy error code and vector code. */
+    pushq $0
+    pushq $\n
+
+    SAVE_REGS
+
+    /* Call handler. */
+    cld
+    mov %rsp, %rdi
+    call \handler
+
+    /* Switch to another task if needed. */
+    call sched_resched
+
+    RESTORE_REGS
 
     /* Return. */
     addq $16, %rsp
@@ -101,22 +131,22 @@ ISR 30 isr_common_handler       /* Intel-reserved.                    */
 ISR 31 isr_common_handler       /* Intel-reserved.                    */
 
 /* Hardware IRQs. */
-ISR 32 isr_common_handler       /* IRQ0 - Timer.      */
-ISR 33 isr_common_handler       /* IRQ1 - Keyboard.   */
-ISR 34 isr_common_handler       /* IRQ2 - Cascade.    */
-ISR 35 isr_common_handler       /* IRQ3 - Serial 2.   */
-ISR 36 isr_common_handler       /* IRQ4 - Serial 1.   */
-ISR 37 isr_common_handler       /* IRQ5 - Parallel 2. */
-ISR 38 isr_common_handler       /* IRQ6 - Floppy.     */
-ISR 39 isr_common_handler       /* IRQ7 - Parallel 1. */
-ISR 40 isr_common_handler       /* IRQ8 - RTC.        */
-ISR 41 isr_common_handler       /* IRQ9 - ACPI.       */
-ISR 42 isr_common_handler       /* IRQ10 - Open.      */
-ISR 43 isr_common_handler       /* IRQ11 - Open.      */
-ISR 44 isr_common_handler       /* IRQ12 - Mouse.     */
-ISR 45 isr_common_handler       /* IRQ13 - FPU.       */
-ISR 46 isr_common_handler       /* IRQ14 - ATA1.      */
-ISR 47 isr_common_handler       /* IRQ15 - ATA2.      */
+IRQ 32 isr_common_handler       /* IRQ0 - Timer.      */
+IRQ 33 isr_common_handler       /* IRQ1 - Keyboard.   */
+IRQ 34 isr_common_handler       /* IRQ2 - Cascade.    */
+IRQ 35 isr_common_handler       /* IRQ3 - Serial 2.   */
+IRQ 36 isr_common_handler       /* IRQ4 - Serial 1.   */
+IRQ 37 isr_common_handler       /* IRQ5 - Parallel 2. */
+IRQ 38 isr_common_handler       /* IRQ6 - Floppy.     */
+IRQ 39 isr_common_handler       /* IRQ7 - Parallel 1. */
+IRQ 40 isr_common_handler       /* IRQ8 - RTC.        */
+IRQ 41 isr_common_handler       /* IRQ9 - ACPI.       */
+IRQ 42 isr_common_handler       /* IRQ10 - Open.      */
+IRQ 43 isr_common_handler       /* IRQ11 - Open.      */
+IRQ 44 isr_common_handler       /* IRQ12 - Mouse.     */
+IRQ 45 isr_common_handler       /* IRQ13 - FPU.       */
+IRQ 46 isr_common_handler       /* IRQ14 - ATA1.      */
+IRQ 47 isr_common_handler       /* IRQ15 - ATA2.      */
 
 /* Pointer table. */
 .section .rodata

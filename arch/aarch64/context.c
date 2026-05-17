@@ -28,7 +28,12 @@ uintptr_t arch_context_get_stack_pointer(cpu_context_t *ctx)
 
 }
 
-uintptr_t arch_context_set_stack_pointer(cpu_context_t *ctx, uintptr_t sp)
+void arch_context_set_stack_pointer(cpu_context_t *ctx, uintptr_t sp)
+{
+
+}
+
+void arch_task_activate(void)
 {
 
 }

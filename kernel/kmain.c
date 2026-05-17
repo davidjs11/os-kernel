@@ -298,17 +298,6 @@ void sched_test(void) {
     kprintf("[sched_test] done\n");
 }
 
-static void __attribute__((naked)) user_entry(void) {
-    __asm__ volatile (
-        "movq $0,    %%rax\n"       /* SYS_EXIT         */
-        "movq $0,    %%rdi\n"       /* code = 0         */
-        "syscall\n"
-        :::
-    );
-
-    for(;;);
-}
-
 #endif /* ARCH_X86_64 */
 
 /*
@@ -342,9 +331,6 @@ void kmain(void)
     sched_enqueue(b);
     sched_enqueue(c);
     sched_enqueue(d);
-
-    task_t *user = task_create_user("user_test", user_entry, TASK_PRIORITY_NORM);
-    sched_enqueue(user);
 #endif /* ARCH_X86_64 */
 
     arch_interrupt_enable();

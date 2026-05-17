@@ -68,6 +68,12 @@ void sched_unblock(task_t *task);
 void sched_tick(void);
 
 /*
+ * @brief Switch to the next task if a reschedule is pending. Called after
+ *        handling every IRQ. Returns when the current task runs again.
+ */
+void sched_resched(void);
+
+/*
  * @brief Mark current task as dead and switch away. Never returns.
  *
  * @param exit_code Exit code of the task.

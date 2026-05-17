@@ -44,23 +44,54 @@ arch_context_switch:
 
 .size arch_context_switch, . - arch_context_switch
 
-.global do_resched
-do_resched:
-    /* Check need_reschedule. */
-    movq need_reschedule(%rip), %rax
-    testq %rax, %rax
-    jz .no_switch
+.global arch_context_first_switch
+.type   arch_context_first_switch, @function
 
-    /* Call kernel sched_resched with current rsp. */
-    movq %rsp, %rdi
-
-    /* Returns new rsp in rax. */
-    call sched_resched
-
+/*
+ * Restores next's callee-saved registers without saving the current ones.
+ * Used only for the first switch, leaving kmain's stack behind.
+ */
+arch_context_first_switch:
+    movq    CTX_RSP(%rdi), %rsp
+    movq    CTX_RBX(%rdi), %rbx
+    movq    CTX_RBP(%rdi), %rbp
+    movq    CTX_R12(%rdi), %r12
+    movq    CTX_R13(%rdi), %r13
+    movq    CTX_R14(%rdi), %r14
+    movq    CTX_R15(%rdi), %r15
     ret
 
-.no_switch:
-    movq %rsp, %rax /* Return current rsp unchanged. */
-    ret
+.size arch_context_first_switch, . - arch_context_first_switch
 
-.size do_resched, . - do_resched
+.global arch_kernel_task_trampoline
+.type   arch_kernel_task_trampoline, @function
+
+/*
+ * First code run by a new kernel task. The iretq frame built by
+ * arch_context_init is on top of the stack.
+ */
+arch_kernel_task_trampoline:
+    iretq
+
+.size arch_kernel_task_trampoline, . - arch_kernel_task_trampoline
+
+.global arch_user_task_trampoline
+.type   arch_user_task_trampoline, @function
+
+/*
+ * First code run by a new user task. Clears caller-saved registers so no
+ * kernel data is leaked to userspace, then iretq to ring 3.
+ */
+arch_user_task_trampoline:
+    xorq    %rax, %rax
+    xorq    %rcx, %rcx
+    xorq    %rdx, %rdx
+    xorq    %rdi, %rdi
+    xorq    %rsi, %rsi
+    xorq    %r8,  %r8
+    xorq    %r9,  %r9
+    xorq    %r10, %r10
+    xorq    %r11, %r11
+    iretq
+
+.size arch_user_task_trampoline, . - arch_user_task_trampoline

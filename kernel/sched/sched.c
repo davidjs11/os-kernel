@@ -34,6 +34,7 @@ static void sched_switch(task_t *next) {
 
     next->state = TASK_RUNNING;
     current = next;
+    arch_task_activate();
 
     arch_context_switch(&prev->context, &next->context);
 }
@@ -111,9 +112,10 @@ task_t *sched_current(void) {
     return current;
 }
 
-uint64_t sched_resched(uintptr_t current_stack_pointer) {
+void sched_resched(void)
+{
     if (sched_ops == NULL || !need_reschedule) {
-        return current_stack_pointer;
+        return;
     }
     need_reschedule = false;
 
@@ -124,24 +126,22 @@ uint64_t sched_resched(uintptr_t current_stack_pointer) {
         next = idle;
     }
     if (next == prev) {
-        return current_stack_pointer;
+        return;
     }
 
     if (prev != NULL && prev->state == TASK_RUNNING) {
-        sched_ops->enqueue(prev);
-    }
-
-    /* Save prev's stack pointer. */
-    if (prev != NULL) {
-        if (prev->state == TASK_RUNNING) {
-            sched_ops->enqueue(prev);
-        }
         prev->state = TASK_READY;
-        arch_context_set_stack_pointer(&prev->context, current_stack_pointer);
+        sched_ops->enqueue(prev);
     }
 
     next->state = TASK_RUNNING;
     current     = next;
+    arch_task_activate();
 
-    return arch_context_get_stack_pointer(&next->context);
+    /* First switch comes from kmain, whose context is not saved. */
+    if (prev == NULL) {
+        arch_context_first_switch(&next->context);
+    } else {
+        arch_context_switch(&prev->context, &next->context);
+    }
 }

@@ -132,6 +132,11 @@ void task_delete(task_t *task)
         return;
     }
 
+    /* User tasks have their own address space. */
+    if (task->space != NULL && task->space != &kernel_space) {
+        vmm_space_delete(task->space);
+    }
+
     kfree(task->kstack);
     kfree(task);
 }

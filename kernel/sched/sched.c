@@ -3,6 +3,7 @@
 /* Kernel scheduler implementation. */
 
 #include <kernel/sched.h>
+#include <kernel/task.h>
 #include <kernel/kprintf.h>
 
 static sched_ops_t   *sched_ops = SCHED_OPS_DEFAULT;
@@ -10,6 +11,12 @@ static task_t        *current   = NULL;
 static task_t        *idle      = NULL;
 static cpu_context_t kmain_context; /* Saves kmain state separately. */
 bool need_reschedule = false;
+
+/*
+ * Task that has exited but still has to be deleted. A task can't free its own
+ * kernel stack while running on it, so it's deleted later from sched_resched.
+ */
+static task_t *zombie = NULL;
 
 /* Idle task function. */
 static void idle_function(void) {
@@ -100,6 +107,9 @@ void sched_exit(int exit_code)
     current->state     = TASK_DEAD;
     current->exit_code = exit_code;
 
+    /* Delete it later, when running on another stack. */
+    zombie = current;
+
     /* Obtain next task. */
     task_t *next = sched_ops->pick_next();
     if (next == NULL) {
@@ -114,6 +124,12 @@ task_t *sched_current(void) {
 
 void sched_resched(void)
 {
+    /* Delete exited task. */
+    if (zombie != NULL) {
+        task_delete(zombie);
+        zombie = NULL;
+    }
+
     if (sched_ops == NULL || !need_reschedule) {
         return;
     }

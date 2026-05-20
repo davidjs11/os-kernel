@@ -14,9 +14,10 @@
 #define TASK_KSTACK_SIZE    2 * 0x1000 /* 2 pages. */
 #define TASK_USTACK_SIZE    2 * 0x1000 /* 2 pages. */
 #define TASK_USTACK_BASE    0x0000000000000000
+#define TASK_PRIORITY_QUANTUM_MAX 8 /* Max. ticks a task runs per turn. */
 #define TASK_PRIORITY_MIN   0
-#define TASK_PRIORITY_MAX   255
-#define TASK_PRIORITY_NORM  128
+#define TASK_PRIORITY_MAX   TASK_PRIORITY_QUANTUM_MAX
+#define TASK_PRIORITY_NORM  (TASK_PRIORITY_QUANTUM_MAX / 2)
 
 /* Process (task) identifier. */
 typedef uint64_t pid_t;
@@ -52,7 +53,8 @@ typedef struct task {
 
     /* Scheduling. */
     uint8_t       priority;    /* Priority level of the task.        */
-    list_node_t   sched_node;  /* Mode inside scheduler's list.      */
+    uint8_t       quantum_remaining; /* Ticks left in current turn.  */
+    list_node_t   sched_node;  /* Node inside scheduler's list.      */
     void          (*entry)(void); /* Task's entry point.             */
 
     /* Hierarchy (future). */

@@ -98,7 +98,9 @@ void sched_yield(void) {
 
 void sched_tick(void)
 {
-    need_reschedule = true;
+    if (sched_ops != NULL && sched_ops->tick != NULL) {
+        sched_ops->tick();
+    }
 }
 
 void sched_exit(int exit_code)

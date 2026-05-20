@@ -1,4 +1,4 @@
-/*   kernel/sched/sched_rr.h   */
+/*   kernel/sched/sched_rr.c   */
 
 /* Round-robin scheduler algorithm implementation. */
 
@@ -14,8 +14,21 @@ void sched_rr_init(void)
     list_init(&run_queue);
 }
 
+/* Number of ticks a task can run before being preempted. */
+static uint8_t rr_quantum(uint8_t priority)
+{
+    if (priority == 0) {
+        return 1;
+    }
+    if (priority > TASK_PRIORITY_QUANTUM_MAX) {
+        return TASK_PRIORITY_QUANTUM_MAX;
+    }
+    return priority;
+}
+
 void sched_rr_enqueue(task_t *task)
 {
+    task->quantum_remaining = rr_quantum(task->priority);
     list_push_back(&run_queue, &task->sched_node);
 }
 
@@ -32,7 +45,7 @@ void sched_rr_block(task_t *task)
 void sched_rr_unblock(task_t *task)
 {
     task->state = TASK_READY;
-    list_push_back(&run_queue, &task->sched_node);
+    sched_rr_enqueue(task);
 }
 
 task_t *sched_rr_pick_next(void)
@@ -48,7 +61,20 @@ task_t *sched_rr_pick_next(void)
 
 void sched_rr_tick(void)
 {
-    sched_yield();
+    task_t *task = sched_current();
+
+    /* First tick, coming from kmain. */
+    if (task == NULL) {
+        sched_yield();
+        return;
+    }
+
+    if (task->quantum_remaining > 0) {
+        task->quantum_remaining--;
+    }
+    if (task->quantum_remaining == 0) {
+        sched_yield();
+    }
 }
 
 sched_ops_t _sched_algorithm_rr = (sched_ops_t) {

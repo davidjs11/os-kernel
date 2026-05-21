@@ -6,6 +6,7 @@
 #include <kernel/pmm.h>
 #include <kernel/kheap.h>
 #include <kernel/kprintf.h>
+#include <kernel/sched.h>
 #include <kernel/arch/paging.h>
 #include <kernel/platform/mem.h>
 #include "vmm_layout.h"
@@ -198,7 +199,20 @@ void vmm_handle_page_fault(
 {
     vmm_region_t *region = vmm_space_find_region(current_space, addr);
     if (region == NULL) {
-        /* TODO: Segfault. */
+        task_t *task = sched_current();
+
+        /* Segmentation fault, kill the task. */
+        if (task != NULL) {
+            kprintf(
+                "[vmm] Segmentation fault at 0x%x (pid %d), killing task.\n",
+                addr,
+                task->pid
+            );
+            sched_exit(-1);
+        }
+
+        /* No task to kill, page fault while initializing the kernel. */
+        kprintf("[vmm] Page fault at 0x%x during kernel init.\n", addr);
         for (;;);
     }
 

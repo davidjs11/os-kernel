@@ -6,8 +6,7 @@
 
 syscall_handler_t syscall_table[SYSCALL_MAX] = {
     [SYS_EXIT]    = sys_exit,
-    // [SYS_WRITE]   = sys_write,
-    // [SYS_READ]    = sys_read,
-    // [SYS_GETPID]  = sys_getpid,
-    // [SYS_BRK]     = sys_brk,
+    [SYS_WRITE]   = sys_write,
+    [SYS_READ]    = sys_read,
+    [SYS_GETPID]  = sys_getpid,
 };

@@ -2,7 +2,7 @@
 
 KSTACK_TOP_OFFSET = 0    /* Must match offsetof(percpu_t, kstack_top). */
 USER_RSP_OFFSET   = 8    /* Must match offsetof(percpu_t, user_rsp).   */
-SYSCALL_MAX       = 5    /* Number of syscalls in the system.   */
+SYSCALL_MAX       = 4    /* Number of syscalls in the system.   */
 
 .section .text
 .global syscall_entry

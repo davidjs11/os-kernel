@@ -13,7 +13,6 @@ typedef enum syscall_num {
     SYS_WRITE  = 1,
     SYS_READ   = 2,
     SYS_GETPID = 3,
-    SYS_BRK    = 4,
 
     /* If SYSCALL_MAX changes, assembly syscall entry should be updated. */
     SYSCALL_MAX,
@@ -66,14 +65,6 @@ uint64_t sys_read(
 
 uint64_t sys_getpid(
         uint64_t,
-        uint64_t,
-        uint64_t,
-        uint64_t,
-        uint64_t,
-        uint64_t);
-
-uint64_t sys_brk(
-        uint64_t addr,
         uint64_t,
         uint64_t,
         uint64_t,

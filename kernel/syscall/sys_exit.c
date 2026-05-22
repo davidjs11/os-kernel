@@ -2,8 +2,8 @@
 
 /* sys_exit syscall implementation. */
 
-#include <kernel/kprintf.h>
 #include <kernel/syscall.h>
+#include <kernel/sched.h>
 
 uint64_t sys_exit(
         uint64_t code,
@@ -13,5 +13,8 @@ uint64_t sys_exit(
         uint64_t,
         uint64_t)
 {
-    kprintf("[!] hello from sys_exit!\n");
+    sched_exit((int) code);
+
+    /* Never reached. */
+    return 0;
 }

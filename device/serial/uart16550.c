@@ -3,6 +3,10 @@
 /* UART16550 UART driver implementation. */
 
 #include <kernel/device/serial/serial.h>
+#include <kernel/device/serial/uart16550.h>
+#include <kernel/device/irq/irq.h>
+#include <kernel/interrupt.h>
+#include <kernel/sched.h>
 
 #ifdef ARCH_X86_64
 
@@ -24,16 +28,24 @@
 #define UART_FCR_ENABLE (1 << 0)
 #define UART_FCR_CLRRX  (1 << 1)
 #define UART_FCR_CLRTX  (1 << 2)
+#define UART_IER_RDA    (1 << 0) /* Received data available interrupt. */
 
 #define UART16550_MAX_INSTANCES 4
 
 typedef struct uart16550_config {
-    uint16_t port;
+    uint16_t port;           /* Base I/O port.                     */
+    bool     rx_irq_enabled; /* RX is interrupt driven.            */
+    char     rx_buf;         /* Last received character.           */
+    bool     rx_ready;       /* rx_buf holds an unread character.  */
+    task_t   *waiter;        /* Task blocked waiting for a char.   */
 } uart16550_config_t;
 
 static uart16550_config_t uart16550_config_pool[UART16550_MAX_INSTANCES];
 static serial_device_t uart16550_device_pool[UART16550_MAX_INSTANCES];
 static int uart16550_pool_used = 0;
+
+/* Device that owns the RX IRQ. */
+static uart16550_config_t *rx_dev = NULL;
 
 static inline void outb(uint16_t port, uint8_t val)
 {
@@ -45,6 +57,22 @@ static inline uint8_t inb(uint16_t port)
     uint8_t val;
     __asm__ volatile ("inb %1, %0" : "=a"(val) : "Nd"(port));
     return val;
+}
+
+static void uart16550_rx_handler(void)
+{
+    if (rx_dev == NULL) {
+        return;
+    }
+
+    rx_dev->rx_buf = (char) inb(rx_dev->port + UART_RBR);
+    rx_dev->rx_ready = true;
+
+    /* Wake up the waiting task. */
+    if (rx_dev->waiter != NULL) {
+        sched_unblock(rx_dev->waiter);
+        rx_dev->waiter = NULL;
+    }
 }
 
 static void uart16550_init(void *data)
@@ -75,12 +103,26 @@ static void uart16550_putc(void *data, char c)
 
 static char uart16550_getc(void *data)
 {
-    uint16_t port = ((uart16550_config_t *) data)->port;
+    uart16550_config_t *config = (uart16550_config_t *) data;
 
-    /* Wait for buffer empty. */
-    while (!(inb(port + UART_LSR) & UART_LSR_DR));
+    /*
+     * Busy wait if RX is not interrupt driven, if there is no task to block
+     * or if another task is already waiting.
+     */
+    if (!config->rx_irq_enabled || sched_current() == NULL
+    || (!config->rx_ready && config->waiter != NULL)) {
+        while (!(inb(config->port + UART_LSR) & UART_LSR_DR));
+        return (char) inb(config->port + UART_RBR);
+    }
 
-    return (char) inb(port + UART_RBR);
+    /* Block until the RX handler receives a character. */
+    if (!config->rx_ready) {
+        config->waiter = sched_current();
+        sched_block();
+    }
+
+    config->rx_ready = false;
+    return config->rx_buf;
 }
 
 static int uart16550_ready(void *data)
@@ -97,7 +139,11 @@ serial_device_t *uart16550_register(uint16_t port)
     }
 
     uart16550_config_pool[uart16550_pool_used] = (uart16550_config_t) {
-        .port = port
+        .port           = port,
+        .rx_irq_enabled = false,
+        .rx_buf         = '\0',
+        .rx_ready       = false,
+        .waiter         = NULL,
     };
 
     uart16550_device_pool[uart16550_pool_used] = (serial_device_t) {
@@ -109,6 +155,17 @@ serial_device_t *uart16550_register(uint16_t port)
     };
 
     return &uart16550_device_pool[uart16550_pool_used++];
+}
+
+void uart16550_enable_rx_irq(serial_device_t *dev, uint32_t irq)
+{
+    uart16550_config_t *config = (uart16550_config_t *) dev->data;
+
+    rx_dev = config;
+    outb(config->port + UART_IER, UART_IER_RDA);
+    irq_set(irq, uart16550_rx_handler);
+    irq_unmask(irq);
+    config->rx_irq_enabled = true;
 }
 
 #endif /* ARCH_X86_64 */

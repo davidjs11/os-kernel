@@ -39,6 +39,13 @@ void platform_init(void)
     irq_init();
     kprintf("[pc] Initialized Intel 8259 PIC.\n");
 
+    /* Serial port RX interrupt. */
+    uart16550_enable_rx_irq(uart16550_device, I8259_IRQ_SERIAL1);
+    kprintf(
+        "[pc] Enabled UART16550 RX interrupt on IRQ%d.\n",
+        I8259_IRQ_SERIAL1
+    );
+
     /* Timer. */
     timer_register(&timer_device_pit);
     kprintf("[pc] Registered Intel 8254 PIT.\n");

@@ -5,6 +5,7 @@
 CC						= x86_64-elf-gcc
 AS						= x86_64-elf-as
 LD						= x86_64-elf-ld
+OBJCOPY					= x86_64-elf-objcopy
 GDB						= x86_64-elf-gdb
 QEMU					= qemu-system-x86_64
 

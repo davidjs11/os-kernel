@@ -29,6 +29,14 @@ PLATFORM_LD				= arch/$(ARCH)/platform/$(PLATFORM)/linker.ld
 DEPENDENCIES			= $(OBJECTS:.o=.d)
 -include $(DEPENDENCIES)
 
+# User-space programs (flat binaries embedded in the kernel image).
+USER_DIR				= user
+USER_SRC				= $(USER_DIR)/shell.c
+USER_LD					= $(USER_DIR)/user.ld
+USER_OBJ				= $(BUILD)/$(USER_DIR)/shell.c.$(ARCH).user.o
+USER_ELF				= $(BUILD)/shell-$(ARCH).elf
+USER_BIN				= $(BUILD)/shell-$(ARCH).bin
+
 # Convert ARCH to compiler definition.
 
 ifeq ($(ARCH),x86_64)
@@ -75,6 +83,36 @@ $(BUILD)/%.S.$(ARCH).o: %.S
 	@mkdir -p $(dir $@)
 	@echo "AS - $<"
 	@$(AS) $(ASFLAGS) -c $< -o $@ $(INCLUDE)
+
+# User-space program flags.
+USER_CFLAGS				=	\
+	-ffreestanding			\
+	-fno-stack-protector	\
+	-fno-pic				\
+	-fno-pie				\
+	-nostdlib				\
+	-std=c99				\
+	-O2						\
+	-Wall					\
+	-D$(ARCH_DEFINE)		\
+	-I$(USER_DIR)/include
+
+# User-space program.
+$(USER_OBJ): $(USER_SRC)
+	@mkdir -p $(dir $@)
+	@echo "CC (user) - $<"
+	@$(CC) $(USER_CFLAGS) -c $< -o $@
+
+$(USER_ELF): $(USER_OBJ) $(USER_LD)
+	@echo "LD (user) - $@"
+	@$(LD) -nostdlib -static -T $(USER_LD) -o $@ $(USER_OBJ)
+
+$(USER_BIN): $(USER_ELF)
+	@echo "OBJCOPY (user) - $@"
+	@$(OBJCOPY) -O binary $< $@
+
+# User binary must exist before assembling the file that embeds it.
+$(BUILD)/arch/$(ARCH)/usertest_blob.S.$(ARCH).o: $(USER_BIN)
 
 # Link target.
 $(TARGET): $(OBJECTS) external/limine/limine

@@ -5,6 +5,7 @@
 CC						= aarch64-elf-gcc
 AS						= aarch64-elf-as
 LD						= aarch64-elf-ld
+OBJCOPY					= aarch64-elf-objcopy
 GDB						= aarch64-elf-gdb
 QEMU					= qemu-system-aarch64
 

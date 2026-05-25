@@ -5,6 +5,7 @@
 #include <kernel/arch/init.h>
 #include <kernel/arch/paging.h>
 #include <kernel/arch/interrupt.h>
+#include <kernel/arch/usertest.h>
 #include <kernel/platform/init.h>
 #include <kernel/pmm.h>
 #include <kernel/vmm.h>
@@ -14,7 +15,6 @@
 #include <kernel/kprintf.h>
 #include <kernel/sched.h>
 #include <kernel/ktimer.h>
-#include <kernel/device/serial/serial.h>
 #include <kernel/device/framebuffer/framebuffer.h>
 
 #define DEMO_BAND_COUNT 4
@@ -89,13 +89,20 @@ void kmain(void)
     sched_enqueue(b);
     sched_enqueue(d);
     sched_enqueue(e);
+
+    task_t *user = arch_user_test_create();
+    if (user != NULL) {
+        sched_enqueue(user);
+        kprintf("[kmain] User task created.\n");
+    } else {
+        kprintf("[kmain] User task creation failed.\n");
+    }
 #endif /* ARCH_X86_64 */
 
     arch_interrupt_enable();
 
-    /* Test input on a useless shell. */
+    /* Serial input belongs to the user shell, just give the CPU away. */
     for (;;) {
-        char c = serial_getc();
-        kprintf("[serial] %x (%c) was received.\n", c, c);
+        sched_yield();
     }
 }

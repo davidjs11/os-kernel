@@ -74,9 +74,9 @@ void kmain(void)
     arch_init();
     platform_init();
     pmm_init(NULL);
+    vmm_init();
 
 #ifdef ARCH_X86_64
-    vmm_init();
     sched_init(NULL);
     ktimer_init(100);
 

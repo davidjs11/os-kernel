@@ -131,6 +131,12 @@ stub_irq:
     exception_store_context
     mov x0, sp
     bl exception_handler_irq
+
+    /*
+     * Switch to another task if needed. When this task runs again, sp points
+     * to its exception frame again.
+     */
+    bl do_resched
     exception_restore_context
     eret
 .size stub_irq, . - stub_irq
@@ -151,3 +157,15 @@ stub_serror:
     bl exception_handler_serror
     b . /* Usually fatal, don't return for the moment. */
 .size stub_serror, . - stub_serror
+
+/*
+ * First code run by a new kernel task. sp points to the exception frame built
+ * by arch_context_init, so eret starts the task at EL1 with IRQs unmasked
+ * (a plain ret would keep the IRQ mask of the interrupt that switched to it).
+ */
+.global kernel_task_trampoline
+.type   kernel_task_trampoline, %function
+kernel_task_trampoline:
+    exception_restore_context
+    eret
+.size kernel_task_trampoline, . - kernel_task_trampoline

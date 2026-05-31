@@ -7,6 +7,8 @@
 #include <kernel/kprintf.h>
 #include <kernel/device/irq/irq.h>
 #include <kernel/device/irq/arm_gicv2.h>
+#include <kernel/device/timer/timer.h>
+#include <kernel/device/timer/arm_vtimer.h>
 #include <kernel/device/serial/serial.h>
 #include <kernel/device/serial/pl011.h>
 
@@ -35,4 +37,8 @@ void platform_init(void)
     irq_register(&irq_device_arm_gicv2);
     irq_init();
     kprintf("[qemu-virt] Initialized ARM GICv2.\n");
+
+    /* Timer. */
+    timer_register(&timer_device_arm_vtimer);
+    kprintf("[qemu-virt] Registered ARM virtual timer.\n");
 }

@@ -75,8 +75,6 @@ void kmain(void)
     platform_init();
     pmm_init(NULL);
     vmm_init();
-
-#ifdef ARCH_X86_64
     sched_init(NULL);
     ktimer_init(100);
 
@@ -90,6 +88,7 @@ void kmain(void)
     sched_enqueue(d);
     sched_enqueue(e);
 
+#ifdef ARCH_X86_64
     task_t *user = arch_user_test_create();
     if (user != NULL) {
         sched_enqueue(user);

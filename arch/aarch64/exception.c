@@ -7,8 +7,10 @@
 #include <kernel/vmm.h>
 #include <kernel/device/irq/irq.h>
 #include <kernel/interrupt.h>
+#include <kernel/syscall.h>
 
 /* Exception classes (ESR_EL1 bits 31:26). */
+#define EC_SVC_AARCH64      0x15 /* SVC instruction.            */
 #define EC_INSTR_ABORT_EL0  0x20 /* Instruction abort from EL0. */
 #define EC_INSTR_ABORT_EL1  0x21 /* Instruction abort from EL1. */
 #define EC_DATA_ABORT_EL0   0x24 /* Data abort from EL0.        */
@@ -24,6 +26,24 @@ void exception_handler_sync(exception_frame_t *frame)
 {
     uint32_t exception_class = (frame->syndrome >> 26) & 0x3f;
     uint32_t iss = frame->syndrome & 0x1ffffff;
+
+    /* System call: number in x8, arguments in x0-x5, return value in x0. */
+    if (exception_class == EC_SVC_AARCH64) {
+        uint64_t num = frame->x[8];
+        if (num < SYSCALL_MAX && syscall_table[num] != NULL) {
+            frame->x[0] = syscall_table[num](
+                frame->x[0],
+                frame->x[1],
+                frame->x[2],
+                frame->x[3],
+                frame->x[4],
+                frame->x[5]
+            );
+        } else {
+            frame->x[0] = (uint64_t) -1;
+        }
+        return;
+    }
 
     /* Page faults. */
     switch (exception_class) {

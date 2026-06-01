@@ -21,13 +21,13 @@ typedef enum syscall_num {
 /*
  * All syscall handlers have this signature. Arguments map to the syscall
  * calling convention:
- *     arg0 = rdi
- *     arg1 = rsi
- *     arg2 = rdx
- *     arg3 = rcx (moved from r10 by entry stub)
- *     arg4 = r8
- *     arg5 = r9
- * Return value in rax.
+ *     arg0 = rdi                                  (x86_64) / x0 (aarch64)
+ *     arg1 = rsi                                  (x86_64) / x1 (aarch64)
+ *     arg2 = rdx                                  (x86_64) / x2 (aarch64)
+ *     arg3 = rcx (moved from r10 by entry stub)   (x86_64) / x3 (aarch64)
+ *     arg4 = r8                                   (x86_64) / x4 (aarch64)
+ *     arg5 = r9                                   (x86_64) / x5 (aarch64)
+ * Return value in rax (x86_64) / x0 (aarch64).
  */
 typedef uint64_t (*syscall_handler_t)(
     uint64_t arg0,

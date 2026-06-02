@@ -16,4 +16,13 @@
  */
 serial_device_t *pl011_register(uint64_t pl011_base);
 
+/*
+ * @brief Make RX interrupt driven, so reading blocks the task instead of busy
+ *        waiting. IRQ controller must be initialized first.
+ *
+ * @param dev Device returned by pl011_register().
+ * @param irq GIC interrupt ID of the device.
+ */
+void pl011_enable_rx_irq(serial_device_t *dev, uint32_t irq);
+
 #endif /* KERNEL_API_DEVICE_SERIAL_PL011_H */

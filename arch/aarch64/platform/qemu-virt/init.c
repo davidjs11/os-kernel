@@ -38,6 +38,10 @@ void platform_init(void)
     irq_init();
     kprintf("[qemu-virt] Initialized ARM GICv2.\n");
 
+    /* Serial port RX interrupt (SPI 1). */
+    pl011_enable_rx_irq(pl011_device, 33);
+    kprintf("[qemu-virt] Enabled PL011 RX interrupt on INTID 33.\n");
+
     /* Timer. */
     timer_register(&timer_device_arm_vtimer);
     kprintf("[qemu-virt] Registered ARM virtual timer.\n");

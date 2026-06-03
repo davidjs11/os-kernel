@@ -169,3 +169,16 @@ kernel_task_trampoline:
     exception_restore_context
     eret
 .size kernel_task_trampoline, . - kernel_task_trampoline
+
+/*
+ * First code run by a new user task. Same as the kernel one, but SP_EL0 has
+ * to be set to the user stack (frame->sp) before eret'ing to EL0.
+ */
+.global user_task_trampoline
+.type   user_task_trampoline, %function
+user_task_trampoline:
+    ldr x9, [sp, #0xf8]
+    msr sp_el0, x9
+    exception_restore_context
+    eret
+.size user_task_trampoline, . - user_task_trampoline

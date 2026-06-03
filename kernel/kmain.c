@@ -88,7 +88,6 @@ void kmain(void)
     sched_enqueue(d);
     sched_enqueue(e);
 
-#ifdef ARCH_X86_64
     task_t *user = arch_user_test_create();
     if (user != NULL) {
         sched_enqueue(user);
@@ -96,7 +95,6 @@ void kmain(void)
     } else {
         kprintf("[kmain] User task creation failed.\n");
     }
-#endif /* ARCH_X86_64 */
 
     arch_interrupt_enable();
 

@@ -159,6 +159,12 @@ void vmm_space_switch(vmm_space_t *space)
     arch_paging_space_load(space->pt_phys);
 }
 
+void vmm_space_set_current(vmm_space_t *space)
+{
+    if (space != NULL) {
+        current_space = space;
+    }
+}
 
 vmm_region_t *vmm_space_find_region(vmm_space_t *space, vaddr_t addr)
 {

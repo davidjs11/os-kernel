@@ -155,6 +155,15 @@ void vmm_space_print_regions(vmm_space_t *space);
 void vmm_space_switch(vmm_space_t *space);
 
 /*
+ * @brief Set the current address space without loading its page table. Used
+ *        when the architecture loads the page table by itself (e.g. TTBR0 on
+ *        AArch64).
+ *
+ * @param space The address space to set as current.
+ */
+void vmm_space_set_current(vmm_space_t *space);
+
+/*
  * @brief Create a new memory region.
  *
  * This function ensures these conditions:

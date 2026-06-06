@@ -15,6 +15,7 @@
 #include <kernel/kprintf.h>
 #include <kernel/sched.h>
 #include <kernel/ktimer.h>
+#include <kernel/ktests.h>
 #include <kernel/device/framebuffer/framebuffer.h>
 
 #define DEMO_BAND_COUNT 4
@@ -77,6 +78,10 @@ void kmain(void)
     vmm_init();
     sched_init(NULL);
     ktimer_init(100);
+
+#ifdef DEBUG
+    ktests_run_all();
+#endif /* DEBUG */
 
     /* Different priorities, so each one gets a different quantum. */
     task_t *a = task_create_kernel("a", task_a, 1);

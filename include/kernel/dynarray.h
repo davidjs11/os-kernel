@@ -90,8 +90,8 @@
     for (T *it = (arr).data; it < (arr).data + (arr).len; it++)
 
 /*
- * Free the backing buffer. Does NOT call any destructor on elements —
- * if elements need cleanup, iterate first.
+ * Free the backing buffer. Does NOT call any destructor on elements, so if
+ * elements need cleanup, iterate first.
  */
 /*
  * @brief Free the dynamic array. This function doesn't call the destructor of

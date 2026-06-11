@@ -19,7 +19,8 @@ bool need_reschedule = false;
 static task_t *zombie = NULL;
 
 /* Idle task function. */
-static void idle_function(void) {
+static void idle_function(void)
+{
     for (;;);
 }
 
@@ -29,7 +30,8 @@ static void idle_function(void) {
  *
  * @param next Next task to run.
  */
-static void sched_switch(task_t *next) {
+static void sched_switch(task_t *next)
+{
     task_t *prev = current;
     if (prev == next) {
         return;
@@ -92,7 +94,8 @@ void sched_unblock(task_t *task)
     sched_ops->unblock(task);
 }
 
-void sched_yield(void) {
+void sched_yield(void)
+{
     need_reschedule = true;
 }
 
@@ -120,7 +123,8 @@ void sched_exit(int exit_code)
     sched_switch(next);
 }
 
-task_t *sched_current(void) {
+task_t *sched_current(void)
+{
     return current;
 }
 

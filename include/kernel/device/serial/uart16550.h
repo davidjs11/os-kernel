@@ -1,6 +1,6 @@
 /*   include/kernel/device/serial/uart16550.h   */
 
-/* PL011 UART device driver header. */
+/* UART16550 device driver header. */
 
 #ifndef KERNEL_API_DEVICE_SERIAL_UART16550_H
 #define KERNEL_API_DEVICE_SERIAL_UART16550_H

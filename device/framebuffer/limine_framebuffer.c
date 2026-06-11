@@ -7,10 +7,6 @@
 
 #define LIMINE_FRAMEBUFFER_MAX_INSTANCES 1
 
-typedef struct uart16550_config {
-    uint16_t port;
-} uart16550_config_t;
-
 /* Extracted from limine.h */
 struct limine_video_mode {
     uint64_t pitch;

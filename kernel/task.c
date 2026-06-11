@@ -1,4 +1,4 @@
-/*   include/task.c   */
+/*   kernel/task.c   */
 
 /* Task management implementation. */
 

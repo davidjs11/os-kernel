@@ -6,7 +6,8 @@
 #include <kernel/device/serial/serial.h>
 #include <stdarg.h>
 
-static void print_uint(uint64_t n, int base) {
+static void print_uint(uint64_t n, int base)
+{
     static const char digits[] = "0123456789abcdef";
     char buf[64];
     int i = 0;
@@ -25,7 +26,8 @@ static void print_uint(uint64_t n, int base) {
     }
 }
 
-void kprintf(const char *fmt, ...) {
+void kprintf(const char *fmt, ...)
+{
     va_list ap;
     va_start(ap, fmt);
 

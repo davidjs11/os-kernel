@@ -1,4 +1,7 @@
 /*   device/framebuffer/framebuffer.c   */
+
+/* Framebuffer device management. */
+
 #include <kernel/device/framebuffer/framebuffer.h>
 
 static framebuffer_device_t *framebuffer_devices[FRAMEBUFFER_MAX_DEVICES];

@@ -8,7 +8,8 @@
 
 extern void syscall_entry(void);
 
-void syscall_init(void) {
+void syscall_init(void)
+{
     /* Enable SYSCALL/SYSRET. */
     uint64_t efer = msr_read(MSR_EFER);
     msr_write(MSR_EFER, efer | EFER_SCE);

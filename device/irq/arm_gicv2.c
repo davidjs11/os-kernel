@@ -119,7 +119,8 @@ void arm_gicv2_eoi(uint32_t irq)
     gicc_write(GICC_EOIR, last_iar);
 }
 
-void arm_gicv2_trigger(uint32_t intid) {
+void arm_gicv2_trigger(uint32_t intid)
+{
     /* Send a SGI interrupt having this CPU as a target. */
     gicd_write(GICD_SGIR, (0x2 << 24) | (intid & 0xF));
 }

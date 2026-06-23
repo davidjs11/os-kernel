@@ -1,60 +1,60 @@
-# Kernel para x86_64 y ARMv8
+# Kernel for x86_64 and ARMv8
 
-Núcleo de sistema operativo desarrollado desde cero con soporte para las
-arquitecturas **x86_64** y **AArch64 (ARMv8)**, como parte de un Trabajo de Fin
-de Grado del Grado en Ingeniería Informática (Universidad de Granada).
+Operating system kernel written from scratch with support for the x86_64 and
+AArch64 (ARMv8) architectures, developed as a Bachelor's Thesis (Trabajo de Fin
+de Grado) for the Computer Engineering degree at the University of Granada.
 
-El núcleo arranca con el cargador [Limine](https://codeberg.org/Limine/limine)
-y se ejecuta sobre QEMU. Incluye gestión de memoria física y virtual, montículo
-del núcleo, planificador expropiativo, procesos en espacio de usuario, llamadas
-al sistema y una pequeña *shell* de usuario.
+The kernel boots with the [Limine](https://codeberg.org/Limine/limine)
+bootloader and runs on QEMU. It includes physical and virtual memory
+management, a kernel heap, a preemptive scheduler, user space processes, system
+calls and a small user shell.
 
-## Estructura del código
+## Source tree
 
 ```
-arch/        Código específico de cada arquitectura y plataforma
-device/      Controladores de dispositivo (serie, IRQ, temporizador, framebuffer)
-include/     Cabeceras públicas del núcleo
-kernel/      Núcleo común (mm, sched, syscall, tests, kmain)
-user/        Programas de espacio de usuario
-external/    Dependencias externas (Limine, se descarga al compilar)
-config.mk    Selección de arquitectura y plataforma
-Makefile     Sistema de construcción
+arch/        Architecture and platform specific code
+device/      Device drivers (serial, IRQ, timer, framebuffer)
+include/     Public kernel headers
+kernel/      Common kernel code (mm, sched, syscall, tests, kmain)
+user/        User space programs
+external/    External dependencies (Limine, downloaded at build time)
+config.mk    Architecture and platform selection
+Makefile     Build system
 ```
 
-## Requisitos
+## Requirements
 
-- Cadena de herramientas cruzada: `x86_64-elf-{gcc,as,ld,objcopy}` o
+- Cross toolchain: `x86_64-elf-{gcc,as,ld,objcopy}` or
   `aarch64-elf-{gcc,as,ld,objcopy}`.
-- `qemu-system-x86_64` o `qemu-system-aarch64`.
+- `qemu-system-x86_64` or `qemu-system-aarch64`.
 - x86_64: `xorriso`.
-- AArch64: `parted`, `mtools` y el firmware `qemu-efi-aarch64`.
+- AArch64: `parted`, `mtools` and the `qemu-efi-aarch64` firmware.
 
-## Compilación y ejecución
+## Building and running
 
-La arquitectura y la plataforma se eligen en `config.mk` (por defecto,
-**x86_64 + PC**; para **AArch64 + QEMU virt** basta con comentar el primer bloque
-y descomentar el segundo).
+The architecture and platform are selected in `config.mk`. The default is
+x86_64 + PC; for AArch64 + QEMU virt, comment out the first block and uncomment
+the second one.
 
 ```bash
-make          # Compila y genera la imagen arrancable
-make run      # Compila y ejecuta en QEMU
-make debug    # Ejecuta en QEMU junto a GDB
-make clean    # Elimina los artefactos de compilación
-make help     # Muestra las arquitecturas disponibles
+make          # Build the bootable image
+make run      # Build and run on QEMU
+make debug    # Run on QEMU with GDB attached
+make clean    # Remove build artifacts
+make help     # Show the available architectures
 ```
 
-La salida del núcleo y la *shell* de usuario se muestran por el puerto serie,
-en la propia terminal. Con `DEBUG` activado en `config.mk` se ejecutan además
-las pruebas del núcleo durante el arranque.
+The kernel output and the user shell go through the serial port, in the same
+terminal. With `DEBUG` enabled in `config.mk`, the kernel tests also run during
+boot.
 
 ## Docker
 
-El `Dockerfile` incluye todas las dependencias, para no tener que instalar la
-cadena de herramientas en el sistema:
+The `Dockerfile` includes all the dependencies, so the toolchain doesn't need
+to be installed on the host:
 
 ```bash
 docker build -t tfg-kernel .
-docker run --rm -v "$PWD":/kernel tfg-kernel make          # Compila
-docker run --rm -it -v "$PWD":/kernel tfg-kernel make run  # Compila y ejecuta
+docker run --rm -v "$PWD":/kernel tfg-kernel make          # Build
+docker run --rm -it -v "$PWD":/kernel tfg-kernel make run  # Build and run
 ```
